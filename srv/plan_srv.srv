@@ -1,0 +1,4 @@
+int64 start_index
+int64 end_index
+---
+int64[] path
