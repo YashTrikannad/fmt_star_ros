@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-
 #include "fmt_star/plan_srv.h"
 
 int main(int argc, char **argv)

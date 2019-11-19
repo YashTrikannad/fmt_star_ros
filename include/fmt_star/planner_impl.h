@@ -1,7 +1,3 @@
-//
-// Created by yash on 11/18/19.
-//
-
 #ifndef SRC_PLANNER_IMPL_H
 #define SRC_PLANNER_IMPL_H
 
