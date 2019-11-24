@@ -25,7 +25,7 @@ bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response
 
     if(plan.empty())
     {
-        return true;
+        return false;
     }
     for(const auto& node: plan)
     {

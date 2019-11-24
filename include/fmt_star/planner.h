@@ -26,7 +26,8 @@ public:
     /// @param occupancy_grid
     explicit Planner(const nav_msgs::OccupancyGrid& occupancy_grid,
                     size_t no_of_nodes,
-                    double ball_radius);
+                    double ball_radius,
+                    const std::array<double, 4>& sampling_rectangle);
 
     /// Updates the occupancy grid with the latest one
     /// @param occupancy_grid
@@ -62,6 +63,9 @@ private:
 
     std::vector<Node> sampled_nodes_;
 
+    std::uniform_real_distribution<double> dis_x;
+    std::uniform_real_distribution<double> dis_y;
+
     /// Sets up graph nodes - Samples N points and then constructs each node
     /// @param no_of_nodes
     void setup_graph_nodes(size_t no_of_nodes);
@@ -72,7 +76,7 @@ private:
     /// @param x_max - x higher limit for sampling
     /// @param y_min - y lower limit for sampling
     /// @param y_max - y higher limit for sampling
-    void construct_node(double x_min, double x_max, double y_min, double y_max);
+    void construct_node();
 
     /// Fills the near node vector of the input node
     /// @param node - current node

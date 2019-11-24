@@ -1,7 +1,7 @@
 #ifndef SRC_PLANNER_IMPL_H
 #define SRC_PLANNER_IMPL_H
 
-#include "planner.h"
+//#include "planner.h"
 
 namespace fmt_star
 {
@@ -10,7 +10,8 @@ namespace fmt_star
 /// @param occupancy_grid
 Planner::Planner(const nav_msgs::OccupancyGrid& occupancy_grid,
                  size_t no_of_nodes,
-                 double ball_radius) :
+                 double ball_radius,
+                 const std::array<double, 4>& sampling_rectangle) :
         generator(rd_engine()),
         ball_radius_(ball_radius)
 {
@@ -19,6 +20,12 @@ Planner::Planner(const nav_msgs::OccupancyGrid& occupancy_grid,
     occupancy_grid_resolution_ = occupancy_grid.info.resolution;
     occupancy_grid_origin_x_ = occupancy_grid.info.origin.position.x;
     occupancy_grid_origin_y_ = occupancy_grid.info.origin.position.y;
+
+    std::uniform_real_distribution<>::param_type x_param(sampling_rectangle[0], sampling_rectangle[1]);
+    std::uniform_real_distribution<>::param_type y_param(sampling_rectangle[2], sampling_rectangle[3]);
+    dis_x.param(x_param);
+    dis_y.param(y_param);
+
     setup_graph_nodes(no_of_nodes);
 }
 
@@ -45,7 +52,7 @@ void Planner::setup_graph_nodes(size_t no_of_nodes)
 {
     for(size_t iter=0; iter<no_of_nodes; iter++)
     {
-        construct_node(-15, 15, -10, 10);
+        construct_node();
     }
     for(auto& node: sampled_nodes_)
     {
@@ -59,10 +66,8 @@ void Planner::setup_graph_nodes(size_t no_of_nodes)
 /// @param x_max - x higher limit for sampling
 /// @param y_min - y lower limit for sampling
 /// @param y_max - y higher limit for sampling
-void Planner::construct_node(double x_min, double x_max, double y_min, double y_max)
+void Planner::construct_node()
 {
-    std::uniform_real_distribution<double> dis_x(x_min, x_max);
-    std::uniform_real_distribution<double> dis_y(y_min, y_max);
     auto x_map = dis_x(generator);
     auto y_map = dis_y(generator);
     while(occupancy_grid_.data[row_major_index(x_map, y_map)] == 100)
@@ -70,7 +75,7 @@ void Planner::construct_node(double x_min, double x_max, double y_min, double y_
         x_map = dis_x(generator);
         y_map = dis_y(generator);
     };
-    sampled_nodes_.emplace_back(Node(x_map, y_map));
+    sampled_nodes_.emplace_back(Node{x_map, y_map});
 }
 
 /// Fills the near node vector of the input node
@@ -79,7 +84,7 @@ void Planner::add_near_nodes(Node* node)
 {
     for(auto& sample_node: sampled_nodes_)
     {
-        if(sqrt(pow(node->x - sample_node.x, 2) - pow(node->y - sample_node.y, 2)) < ball_radius_)
+        if(sqrt(pow(node->x - sample_node.x, 2) + pow(node->y - sample_node.y, 2)) < ball_radius_)
         {
             node->near_nodes.emplace_back(&sample_node);
         }
@@ -99,7 +104,7 @@ size_t Planner::row_major_index(double x, double y)
 /// @return (x, y) position in map
 std::array<double, 2> Planner::get_xy(size_t row_major_index)
 {
-    std::array<double, 2> xy_coordinates;
+    std::array<double, 2> xy_coordinates{};
     xy_coordinates[1] = static_cast<int>(row_major_index/occupancy_grid_cols_);
     xy_coordinates[0] = row_major_index - (xy_coordinates[1] * occupancy_grid_cols_);
     return xy_coordinates;
