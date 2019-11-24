@@ -30,10 +30,8 @@ Planner::Planner(const nav_msgs::OccupancyGrid& occupancy_grid,
 }
 
 /// This function runs the FMT star search and returns the path between the start and the goal
-/// @param start
-/// @param goal
-/// @return
-std::vector<int> Planner::get_plan(const int start, const int goal) const
+std::vector<std::array<double, 2>> Planner::get_plan(
+        const std::array<double, 2>& start, const std::array<double, 2>&goal) const
 {
     // FMT Star Algorithm
     return {};

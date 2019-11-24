@@ -1,6 +1,7 @@
-int64 start_index
-int64 end_index
+float64[] start_position
+float64[] end_position
 ---
-int64[] path
+float64[] path_x
+float64[] path_y
 float64[] x_nodes
 float64[] y_nodes

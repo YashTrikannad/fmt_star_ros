@@ -11,8 +11,8 @@ int main(int argc, char **argv)
 
     // Get Start and End Co-ordinates
     fmt_star::plan_srv srv_message;
-    srv_message.request.start_index = 1;
-    srv_message.request.end_index = 100;
+    srv_message.request.start_position = std::vector<double>{0, 0};
+    srv_message.request.end_position = std::vector<double>{5, 0};;
 
     ros::Publisher pub = n.advertise<visualization_msgs::MarkerArray>("sampled_nodes", 1000);
 

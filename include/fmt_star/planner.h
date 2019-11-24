@@ -34,11 +34,13 @@ public:
     void update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_grid);
 
     /// This function runs the FMT star search and returns the path between the start and the goal
-    /// @param start - row major index of the start in the map
-    /// @param goal - row major index of the goal in the map
-    /// @return vector of row major indices of the obstacle free path from the start to goal
-    std::vector<int> get_plan(int start, int goal) const;
+    /// @param start - (x, y) position of start in map frame
+    /// @param goal - (x, y) position of goal in map frame
+    /// @return vector of (x, y) positions along the path from start to goal in map frame
+    std::vector<std::array<double, 2>> get_plan(const std::array<double, 2>& start, const std::array<double, 2>&goal) const;
 
+    /// (Temporary Function: Only for Visualization) Returns all Sampled Nodes
+    /// @return (x, y) of all nodes in the map frame
     std::vector<std::array<double, 2>> get_sampled_nodes()
     {
         std::vector<std::array<double, 2>> sampled_nodes_xy;

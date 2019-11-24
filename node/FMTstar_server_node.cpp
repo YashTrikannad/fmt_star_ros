@@ -9,14 +9,21 @@ bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response
     ros::NodeHandle nh;
     int n_samples;
     double near_radius;
+    std::array<double, 4> rectangular_sampling_limits{};
     nh.getParam("n_samples", n_samples);
     nh.getParam("near_radius", near_radius);
+    nh.getParam("x_min", rectangular_sampling_limits[0]);
+    nh.getParam("x_max", rectangular_sampling_limits[1]);
+    nh.getParam("y_min", rectangular_sampling_limits[2]);
+    nh.getParam("y_max", rectangular_sampling_limits[3]);
+
     nav_msgs::OccupancyGrid input_map_  = *(ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map",ros::Duration(2)));
 
-    fmt_star::Planner planner(input_map_, n_samples, near_radius);
-    const auto plan = planner.get_plan(request.start_index, request.end_index);
-    const auto sampled_nodes = planner.get_sampled_nodes();
+    fmt_star::Planner planner(input_map_, n_samples, near_radius, rectangular_sampling_limits);
+    const auto plan = planner.get_plan({request.start_position[0],request.start_position[1]} ,
+                                       {request.end_position[0],request.end_position[1]});
 
+    const auto sampled_nodes = planner.get_sampled_nodes();
     for(const auto& node:sampled_nodes)
     {
         response.x_nodes.emplace_back(node[0]);
@@ -25,11 +32,13 @@ bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response
 
     if(plan.empty())
     {
-        return false;
+        ROS_INFO("Plan not found");
+        return true;
     }
     for(const auto& node: plan)
     {
-        response.path.emplace_back(node);
+        response.path_x.emplace_back(node[0]);
+        response.path_y.emplace_back(node[0]);
     }
     return true;
 }
