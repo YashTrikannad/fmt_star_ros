@@ -85,6 +85,15 @@ private:
     /// @param node - current node
     void add_near_nodes(Node* node);
 
+    /// Check if there was a collision between two nodes
+    /// @param node1
+    /// @param node2
+    /// @return return true if there was a collision between two nodes
+    bool is_collision_free(const Node& node1, const Node& node2);
+
+    /// Inflate the obstacle with the obstacle radius
+    void do_obstacle_inflation();
+
     /// Get Row Major Index corresponding to the occupancy grid initialized in the planner class
     ///
     /// @param x - x position in map frame

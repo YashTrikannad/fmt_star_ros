@@ -11,10 +11,10 @@ namespace fmt_star
 
 /// Creates a Planner instance with the input occupancy grid as the map
 /// @param occupancy_grid
-Planner::Planner(const nav_msgs::OccupancyGrid& occupancy_grid,
+Planner::Planner(const nav_msgs::OccupancyGrid &occupancy_grid,
                  size_t no_of_nodes,
                  double ball_radius,
-                 const std::array<double, 4>& sampling_rectangle) :
+                 const std::array<double, 4> &sampling_rectangle) :
         generator(rd_engine()),
         ball_radius_(ball_radius)
 {
@@ -34,21 +34,25 @@ Planner::Planner(const nav_msgs::OccupancyGrid& occupancy_grid,
 
 /// This function runs the FMT star search and returns the path between the start and the goal
 std::vector<std::array<double, 2>> Planner::get_plan(
-        const std::array<double, 2>& start, const std::array<double, 2>&goal) const
+        const std::array<double, 2> &start, const std::array<double, 2> &goal) const
 {
-    // FMT Star Algorithm
-    std::unordered_set<Node*> visited_set{};
-    std::unordered_set<Node*> open_set{};
+    std::unordered_set<Node *> visited_set{};
+    std::unordered_set<Node *> open_set{};
 
-    auto less = [&](const Node* left, const Node* right)
-    {
+    auto less = [&](const Node *left, const Node *right) {
         return left->cost > right->cost;
     };
     std::priority_queue<Node*, std::vector<Node*>, decltype(less)> open_queue(less);
 
-
+    // TODO: FMT* Path Planning
 
     return {};
+}
+
+/// Inflate the obstacle with the obstacle radius
+void Planner::do_obstacle_inflation()
+{
+    // TODO: Obstacle Inflation
 }
 
 /// Updates the occupancy grid with the latest one
@@ -56,6 +60,28 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 void Planner::update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_grid)
 {
     occupancy_grid_ = occupancy_grid;
+}
+
+/// Check if there was a collision between two nodes
+/// @param node1
+/// @param node2
+/// @return return true if there was a collision between two nodes
+bool Planner::is_collision_free(const Node& node1, const Node& node2)
+{
+    double current_x = node1.x;
+    double current_y = node1.y;
+    double diff_x = (node2.x-node1.x)/10;
+    double diff_y = (node2.y-node1.y)/10;
+    for(int i=0; i<10; i++)
+    {
+        if(occupancy_grid_.data[row_major_index(current_x, current_y)]==100)
+        {
+            return false;
+        }
+        current_x = current_x + i*diff_x;
+        current_y = current_y + i*diff_y;
+    }
+    return true;
 }
 
 /// Sets up graph nodes - Samples N points and then constructs each node
