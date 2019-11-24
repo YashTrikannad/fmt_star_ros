@@ -1,0 +1,6 @@
+<launch>
+
+    <rosparam command="load" file="$(find fmt_star)/config/config.yaml" />
+    <node pkg="fmt_star" name="FMTstar_server_node" type="FMTstar_server_node" output="screen"/>
+
+</launch>

@@ -63,7 +63,14 @@ void Planner::construct_node(double x_min, double x_max, double y_min, double y_
 {
     std::uniform_real_distribution<double> dis_x(x_min, x_max);
     std::uniform_real_distribution<double> dis_y(y_min, y_max);
-    sampled_nodes_.emplace_back(Node(dis_x(generator), dis_y(generator)));
+    auto x_map = dis_x(generator);
+    auto y_map = dis_y(generator);
+    while(occupancy_grid_.data[row_major_index(x_map, y_map)] == 100)
+    {
+        x_map = dis_x(generator);
+        y_map = dis_y(generator);
+    };
+    sampled_nodes_.emplace_back(Node(x_map, y_map));
 }
 
 /// Fills the near node vector of the input node
@@ -85,6 +92,17 @@ size_t Planner::row_major_index(double x, double y)
     const auto x_index = static_cast<size_t>((x - occupancy_grid_origin_x_)/occupancy_grid_resolution_);
     const auto y_index = static_cast<size_t>((y - occupancy_grid_origin_y_)/occupancy_grid_resolution_);
     return y_index*occupancy_grid_cols_ + x_index;
+}
+
+/// Get the (x, y) position in map frame given the row major index
+/// @param row_major_index of position in the map
+/// @return (x, y) position in map
+std::array<double, 2> Planner::get_xy(size_t row_major_index)
+{
+    std::array<double, 2> xy_coordinates;
+    xy_coordinates[1] = static_cast<int>(row_major_index/occupancy_grid_cols_);
+    xy_coordinates[0] = row_major_index - (xy_coordinates[1] * occupancy_grid_cols_);
+    return xy_coordinates;
 }
 
 } // namespace fmt_star

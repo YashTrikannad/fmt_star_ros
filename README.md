@@ -7,7 +7,7 @@ Steps to run it:
 
 **git clone https://github.com/YashTrikannad/FMTstar-planner.git**
 
-2. Run the F110 simulator (Make sure you have it cloned on your local machine- https://github.com/mlab-upenn/f110-fall2019-skeletons/tree/master/racecar_simulator)
+2. Run the F110 simulator (Make sure you have it cloned on your local machine- https://github.com/mlab-upenn/f110-fall2019-skeletons)
 
 **roslaunch racecar_simulator simulator.launch**
 

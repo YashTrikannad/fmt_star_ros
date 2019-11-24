@@ -38,9 +38,14 @@ public:
     /// @return vector of row major indices of the obstacle free path from the start to goal
     std::vector<int> get_plan(int start, int goal) const;
 
-    std::vector<Node> get_sampled_nodes()
+    std::vector<std::array<double, 2>> get_sampled_nodes()
     {
-        return sampled_nodes_;
+        std::vector<std::array<double, 2>> sampled_nodes_xy;
+        for(const auto& node:sampled_nodes_)
+        {
+            sampled_nodes_xy.push_back({node.x, node.y});
+        }
+        return sampled_nodes_xy;
     }
 
 private:
@@ -79,6 +84,11 @@ private:
     /// @param y - y position in map frame
     /// @return row major index
     size_t row_major_index(double x, double y);
+
+    /// Get the (x, y) position in map frame given the row major index
+    /// @param row_major_index of position in the map
+    /// @return (x, y) position in map
+    std::array<double, 2> get_xy(size_t row_major_index);
 };
 
 } // namespace fmt_star

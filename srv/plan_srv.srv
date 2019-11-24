@@ -2,3 +2,5 @@ int64 start_index
 int64 end_index
 ---
 int64[] path
+float64[] x_nodes
+float64[] y_nodes
