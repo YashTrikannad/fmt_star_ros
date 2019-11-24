@@ -11,3 +11,6 @@ x_min: -15
 x_max: 15
 y_min: -10
 y_max: 10
+
+# Node Construction and Near Node Calculations
+online: false

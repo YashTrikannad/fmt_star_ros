@@ -3,6 +3,9 @@
 
 //#include "planner.h"
 
+#include <unordered_set>
+#include <queue>
+
 namespace fmt_star
 {
 
@@ -34,6 +37,17 @@ std::vector<std::array<double, 2>> Planner::get_plan(
         const std::array<double, 2>& start, const std::array<double, 2>&goal) const
 {
     // FMT Star Algorithm
+    std::unordered_set<Node*> visited_set{};
+    std::unordered_set<Node*> open_set{};
+
+    auto less = [&](const Node* left, const Node* right)
+    {
+        return left->cost > right->cost;
+    };
+    std::priority_queue<Node*, std::vector<Node*>, decltype(less)> open_queue(less);
+
+
+
     return {};
 }
 
