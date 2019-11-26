@@ -6,6 +6,9 @@ n_samples: 1000
 # Max Radius between two nodes to be qualified as neighbours (in m)
 near_radius: 0.5
 
+# Obstacle Inflation Radius (Note: Calculated In cells)
+obstacle_inflation_radius: 1
+
 # Rectangle for Uniform Sampling of Nodes with respect to origin of map(in m)
 x_min: -15
 x_max: 15

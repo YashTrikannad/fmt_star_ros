@@ -5,24 +5,31 @@
 
 #include <unordered_set>
 #include <queue>
+#include <utility>
 
 namespace fmt_star
 {
 
 /// Creates a Planner instance with the input occupancy grid as the map
-/// @param occupancy_grid
-Planner::Planner(const nav_msgs::OccupancyGrid &occupancy_grid,
+/// @param occupancy_grid - current occupancy grid (map)
+/// @param no_of_nodes - No. of nodes to sample over a map
+/// @param ball_radius - radius to be considered for a sample to be near neighbor
+/// @param obstacle_inflation_radius - safety boundary around obstacles
+/// @param sampling_rectangle - Rectangle defining the boundary for sampling nodes
+Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
                  size_t no_of_nodes,
                  double ball_radius,
+                 int obstacle_inflation_radius,
                  const std::array<double, 4> &sampling_rectangle) :
+        occupancy_grid_(std::move(occupancy_grid)),
         generator(rd_engine()),
-        ball_radius_(ball_radius)
+        ball_radius_(ball_radius),
+        obstacle_inflation_radius_(obstacle_inflation_radius)
 {
-    occupancy_grid_ = occupancy_grid;
-    occupancy_grid_cols_ = occupancy_grid.info.width;
-    occupancy_grid_resolution_ = occupancy_grid.info.resolution;
-    occupancy_grid_origin_x_ = occupancy_grid.info.origin.position.x;
-    occupancy_grid_origin_y_ = occupancy_grid.info.origin.position.y;
+    occupancy_grid_cols_ = occupancy_grid_.info.width;
+    occupancy_grid_resolution_ = occupancy_grid_.info.resolution;
+    occupancy_grid_origin_x_ = occupancy_grid_.info.origin.position.x;
+    occupancy_grid_origin_y_ = occupancy_grid_.info.origin.position.y;
 
     std::uniform_real_distribution<>::param_type x_param(sampling_rectangle[0], sampling_rectangle[1]);
     std::uniform_real_distribution<>::param_type y_param(sampling_rectangle[2], sampling_rectangle[3]);
@@ -49,12 +56,6 @@ std::vector<std::array<double, 2>> Planner::get_plan(
     return {};
 }
 
-/// Inflate the obstacle with the obstacle radius
-void Planner::do_obstacle_inflation()
-{
-    // TODO: Obstacle Inflation
-}
-
 /// Updates the occupancy grid with the latest one
 /// @param occupancy_grid
 void Planner::update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_grid)
@@ -62,7 +63,7 @@ void Planner::update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_gri
     occupancy_grid_ = occupancy_grid;
 }
 
-/// Check if there was a collision between two nodes
+/// Check if there was a collision between two nodes (Internally does Obstacle Inflation)
 /// @param node1
 /// @param node2
 /// @return return true if there was a collision between two nodes
@@ -70,16 +71,25 @@ bool Planner::is_collision_free(const Node& node1, const Node& node2)
 {
     double current_x = node1.x;
     double current_y = node1.y;
-    double diff_x = (node2.x-node1.x)/10;
-    double diff_y = (node2.y-node1.y)/10;
-    for(int i=0; i<10; i++)
+    const double diff_x = (node2.x-node1.x)/10;
+    const double diff_y = (node2.y-node1.y)/10;
+
+    for(int ii=0; ii<10; ii++)
     {
-        if(occupancy_grid_.data[row_major_index(current_x, current_y)]==100)
+        const auto x_index = static_cast<int>((current_x - occupancy_grid_origin_x_)/occupancy_grid_resolution_);
+        const auto y_index = static_cast<int>((current_y - occupancy_grid_origin_y_)/occupancy_grid_resolution_);
+        for(int i=-obstacle_inflation_radius_+x_index; i<obstacle_inflation_radius_+1+x_index; i++)
         {
-            return false;
+            for(int j=-obstacle_inflation_radius_+y_index; j<obstacle_inflation_radius_+1+y_index; j++)
+            {
+                if(occupancy_grid_.data[j*occupancy_grid_cols_ + i]==100)
+                {
+                    return false;
+                }
+            }
         }
-        current_x = current_x + i*diff_x;
-        current_y = current_y + i*diff_y;
+        current_x = current_x + ii*diff_x;
+        current_y = current_y + ii*diff_y;
     }
     return true;
 }

@@ -23,10 +23,15 @@ class Planner
 {
 public:
     /// Creates a Planner instance with the input occupancy grid as the map
-    /// @param occupancy_grid
-    explicit Planner(const nav_msgs::OccupancyGrid& occupancy_grid,
+    /// @param occupancy_grid - current occupancy grid (map)
+    /// @param no_of_nodes - No. of nodes to sample over a map
+    /// @param ball_radius - radius to be considered for a sample to be near neighbor
+    /// @param obstacle_inflation_radius - safety boundary around obstacles
+    /// @param sampling_rectangle - Rectangle defining the boundary for sampling nodes
+    explicit Planner(nav_msgs::OccupancyGrid occupancy_grid,
                     size_t no_of_nodes,
                     double ball_radius,
+                    int obstacle_inflation_radius,
                     const std::array<double, 4>& sampling_rectangle);
 
     /// Updates the occupancy grid with the latest one
@@ -60,6 +65,7 @@ private:
     double occupancy_grid_origin_y_;
 
     double ball_radius_;
+    int obstacle_inflation_radius_;
 
     std::random_device rd_engine;
     std::mt19937 generator;
@@ -90,9 +96,6 @@ private:
     /// @param node2
     /// @return return true if there was a collision between two nodes
     bool is_collision_free(const Node& node1, const Node& node2);
-
-    /// Inflate the obstacle with the obstacle radius
-    void do_obstacle_inflation();
 
     /// Get Row Major Index corresponding to the occupancy grid initialized in the planner class
     ///
