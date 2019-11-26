@@ -18,11 +18,12 @@ int main(int argc, char **argv)
 
     visualization_msgs::MarkerArray viz_msg;
 
-    while(true)
+    while(ros::ok())
     {
         // Call the service and get a response
         if (client.call(srv_message))
         {
+            ROS_INFO("Test Nodes Recieved.");
             viz_msg.markers.clear();
             if (srv_message.response.y_nodes.empty() || srv_message.response.x_nodes.empty())
             {
@@ -31,7 +32,6 @@ int main(int argc, char **argv)
             for (size_t i = 0; i < srv_message.response.x_nodes.size(); i++)
             {
                 visualization_msgs::Marker point;
-                std::cout << "i: " << i << " ";
                 point.header.frame_id = "/map";
                 point.header.stamp = ros::Time::now();
                 point.ns = "points";
@@ -52,8 +52,8 @@ int main(int argc, char **argv)
             }
             pub.publish(viz_msg);
             ROS_INFO("Sample Nodes Published");
-            ROS_INFO("Test Nodes Recieved");
-        } else
+        }
+        else
         {
             ROS_ERROR("No Plan Recieved");
         }
