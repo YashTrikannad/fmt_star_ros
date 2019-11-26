@@ -19,11 +19,13 @@ namespace fmt_star
 Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
                  size_t no_of_nodes,
                  double ball_radius,
+                 size_t n_collision_checks,
                  int obstacle_inflation_radius,
                  const std::array<double, 4> &sampling_rectangle) :
         occupancy_grid_(std::move(occupancy_grid)),
         generator(rd_engine()),
         ball_radius_(ball_radius),
+        n_collision_checks_(n_collision_checks),
         obstacle_inflation_radius_(obstacle_inflation_radius)
 {
     occupancy_grid_cols_ = occupancy_grid_.info.width;

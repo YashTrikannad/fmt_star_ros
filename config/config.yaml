@@ -9,6 +9,9 @@ near_radius: 0.5
 # Obstacle Inflation Radius (Note: Calculated In cells)
 obstacle_inflation_radius: 1
 
+# No. of Collision checks between 2 points
+n_collision_checks: 10
+
 # Rectangle for Uniform Sampling of Nodes with respect to origin of map(in m)
 x_min: -15
 x_max: 15

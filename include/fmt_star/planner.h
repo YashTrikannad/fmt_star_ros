@@ -31,6 +31,7 @@ public:
     explicit Planner(nav_msgs::OccupancyGrid occupancy_grid,
                     size_t no_of_nodes,
                     double ball_radius,
+                    size_t n_collision_checks,
                     int obstacle_inflation_radius,
                     const std::array<double, 4>& sampling_rectangle);
 
@@ -65,6 +66,7 @@ private:
     double occupancy_grid_origin_y_;
 
     double ball_radius_;
+    size_t n_collision_checks_;
     int obstacle_inflation_radius_;
 
     std::random_device rd_engine;

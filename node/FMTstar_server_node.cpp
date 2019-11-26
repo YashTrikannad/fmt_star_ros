@@ -9,10 +9,13 @@ bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response
     ros::NodeHandle nh;
     int n_samples = 0;
     double near_radius = 0;
+    int n_collision_checks = 0;
     double obstacle_inflation_radius = 0;
     std::array<double, 4> rectangular_sampling_limits{};
+
     nh.getParam("n_samples", n_samples);
     nh.getParam("near_radius", near_radius);
+    nh.getParam("n_collision_checks", n_collision_checks);
     nh.getParam("obstacle_inflation_radius", obstacle_inflation_radius);
     nh.getParam("x_min", rectangular_sampling_limits[0]);
     nh.getParam("x_max", rectangular_sampling_limits[1]);
@@ -21,7 +24,13 @@ bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response
 
     nav_msgs::OccupancyGrid input_map_  = *(ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map",ros::Duration(2)));
 
-    fmt_star::Planner planner(input_map_, n_samples, near_radius, obstacle_inflation_radius, rectangular_sampling_limits);
+    fmt_star::Planner planner(input_map_,
+            n_samples,
+            near_radius,
+            n_collision_checks,
+            obstacle_inflation_radius,
+            rectangular_sampling_limits);
+
     const auto plan = planner.get_plan({request.start_position[0],request.start_position[1]} ,
                                        {request.end_position[0],request.end_position[1]});
 
