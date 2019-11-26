@@ -5,17 +5,35 @@ This repository is being developed for doing path-planning using FMTstar-planner
 Steps to run it:
 1. Clone the Repository
 
-**git clone https://github.com/YashTrikannad/FMTstar-planner.git**
+> cd catkin_ws/src 
 
-2. Run the F110 simulator (Make sure you have it cloned on your local machine- https://github.com/mlab-upenn/f110-fall2019-skeletons)
+> git clone https://github.com/YashTrikannad/FMTstar-planner.git 
 
-**roslaunch racecar_simulator simulator.launch**
+> catkin_make install
 
-3. Run the Server Node
+> catkin_make
 
-**rosrun fmt_star FMTstar_server_node**
+2. Run the F110 simulator (Make sure you have it cloned on your local machine (Follow the instructions in this repository)- https://github.com/mlab-upenn/f110-fall2019-skeletons)
 
-4. Run the Client Node
+> cd catkin_ws
 
-**rosrun fmt_star FMTstar_test_client_node**
+> source devel/setup.bash
+
+> roslaunch racecar_simulator simulator.launch
+
+3. Open a new terminal. Run the Server Node
+
+> cd catkin_ws
+
+> source devel/setup.bash
+
+> roslaunch fmt_star fmt_star_server.launch
+
+4. Open a new terminal. Run the Client Node
+
+> cd catkin_ws
+
+> source devel/setup.bash
+
+> rosrun fmt_star FMTstar_test_client_node
 
