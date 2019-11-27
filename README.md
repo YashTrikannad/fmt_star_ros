@@ -1,6 +1,6 @@
 # FMTstar-planner
 
-This repository is being developed for doing path-planning using FMTstar-planner for occupancy grids in ROS.
+This repository is being developed for doing path-planning using a Heuristic FMT*(Forward Marching Tree) planner for occupancy grids in ROS.
 
 Steps to run it:
 1. Clone the Repository
@@ -29,7 +29,7 @@ Steps to run it:
 
 > roslaunch fmt_star fmt_star_server.launch
 
-4. Open a new terminal. Run the Client Node
+4. Open a new terminal. Run the Client Node to query the planner
 
 > cd catkin_ws
 
@@ -37,3 +37,5 @@ Steps to run it:
 
 > rosrun fmt_star FMTstar_test_client_node
 
+
+Configuration Parameters can be changed in the config/config.yaml file to get the desired behavior and efficiency
