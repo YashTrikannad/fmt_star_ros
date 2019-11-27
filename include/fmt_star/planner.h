@@ -45,7 +45,7 @@ public:
                     int obstacle_inflation_radius,
                     double goal_tolerance_,
                     bool online,
-                    const std::array<double, 4>& sampling_rectangle = {});
+                    const std::array<double, 4>& sampling_rectangle);
 
     /// Updates the occupancy grid with the latest one
     /// @param occupancy_grid
@@ -69,10 +69,15 @@ private:
     double occupancy_grid_origin_x_;
     double occupancy_grid_origin_y_;
 
+    size_t no_of_nodes_;
     double ball_radius_;
     size_t n_collision_checks_;
     int obstacle_inflation_radius_;
     double goal_tolerance_;
+    bool online_;
+
+    Node* start_node_ptr_;
+    Node* goal_node_ptr_;
 
     std::random_device rd_engine;
     std::mt19937 generator;
@@ -83,20 +88,19 @@ private:
     std::uniform_real_distribution<double> dis_y;
 
     /// Sets up graph nodes - Samples N points and then constructs each node
-    /// @param no_of_nodes
-    void setup_graph_nodes(size_t no_of_nodes);
+    void construct_nodes_and_add_near_neighbors();
 
-    /// Constructs a Node by Sampling a x, y point from the Occupancy Grid with limits and adds it to
+    /// Constructs all the nodes by Sampling a x, y point from the Occupancy Grid with limits and adds it to
     /// the vector of sampled nodes
-    /// @param x_min - x lower limit for sampling
-    /// @param x_max - x higher limit for sampling
-    /// @param y_min - y lower limit for sampling
-    /// @param y_max - y higher limit for sampling
-    void construct_node();
+    void construct_nodes();
 
     /// Fills the near node vector of the input node
     /// @param node - current node
     void add_near_nodes(Node* node);
+
+    /// Returns the vector of near nodes of the input node
+    /// @param node - current node
+    std::vector<Node*> find_near_nodes(Node* node);
 
     /// Generates path from goal node to start node
     /// \param goal_node

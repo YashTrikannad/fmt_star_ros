@@ -19,6 +19,7 @@ public:
         nh_.getParam("x_max", rectangular_sampling_limits_[1]);
         nh_.getParam("y_min", rectangular_sampling_limits_[2]);
         nh_.getParam("y_max", rectangular_sampling_limits_[3]);
+        nh_.getParam("online", online_);
         nh_.getParam("visualization", visualization_);
 
         node_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("sampled_nodes", 1000);
@@ -34,6 +35,7 @@ public:
                                   n_collision_checks_,
                                   obstacle_inflation_radius_,
                                   goal_tolerance_,
+                                  online_,
                                   rectangular_sampling_limits_);
 
         const auto plan = planner.get_plan({request.start_position[0],request.start_position[1]} ,
@@ -54,7 +56,7 @@ public:
         for(const auto& node: plan)
         {
             response.path_x.emplace_back(node[0]);
-            response.path_y.emplace_back(node[0]);
+            response.path_y.emplace_back(node[1]);
         }
         return true;
     }
@@ -68,6 +70,7 @@ private:
     int n_collision_checks_;
     int obstacle_inflation_radius_;
     double goal_tolerance_;
+    bool online_;
     std::array<double, 4> rectangular_sampling_limits_;
 
     bool visualization_;

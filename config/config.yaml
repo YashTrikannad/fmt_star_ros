@@ -1,10 +1,10 @@
 # Config File with ROS Parameters
 
 # No. of Samples for the FMT* Planner
-n_samples: 2000
+n_samples: 3000
 
 # Max Radius between two nodes to be qualified as neighbours (in m)
-near_radius: 1.0
+near_radius: 0.5
 
 # Obstacle Inflation Radius (Note: Calculated In cells)
 obstacle_inflation_radius: 2
@@ -22,7 +22,7 @@ y_min: -10
 y_max: 10
 
 # Node Construction and Near Node Calculations
-online: false
+online: true
 
 # Enable Visualization
 visualization: true
