@@ -91,42 +91,23 @@ std::vector<std::array<double, 2>> Planner::get_plan(
     // Until z is goal node
     while(z_node_ptr->traversal_cost(goal_node) > goal_tolerance_)
     {
-        std::cout << "z_node: " << z_node_ptr->x << " " << z_node_ptr->y << std::endl;
-        if(z_node_ptr->parent_node)
-        {
-            std::cout << "z_node parent: " << z_node_ptr->parent_node->x << " " << z_node_ptr->parent_node->y << std::endl;
-        }
-        else
-        {
-            ROS_INFO("No Parent");
-        }
-
         std::unordered_set<Node *> open_new_set{};
         open_new_set.clear();
 
-        std::cout << "Z neighbor size: " << z_node_ptr->near_nodes.size() << std::endl;
-
         for(const auto& x_node_ptr: z_node_ptr->near_nodes)
         {
-            ROS_INFO("Iterating over z_node neighbors");
             //for all unvisited nodes x_node_ptr in neighbourhood of z_node_ptr
             if (unvisited_set.find(x_node_ptr) != unvisited_set.end())
             {
-                std::cout << "HI" << "\n";
                 // minimum cost node for x_node_ptr
                 Node* y_min_node_ptr = nullptr;
 
                 for (auto& y_node_ptr: x_node_ptr->near_nodes)
                 {
-                    std::cout << "y_node_ptr: " << y_node_ptr->x << " " << y_node_ptr->y << std::endl;
-                    std::cout << "HI2" << "\n";
-
-                    std::cout << "Open Set Size" << open_set.size() << "\n";
 
                     //for all open y_nodes in neighbourhood of unvisited x_node_ptr
                     if (open_set.find(y_node_ptr) != open_set.end())
                     {
-                        std::cout << "FOUND" << "\n";
                         //find least cost path to x_node_ptr from open nodes y_node_ptr
                         if(y_min_node_ptr == nullptr)
                         {
@@ -141,8 +122,10 @@ std::vector<std::array<double, 2>> Planner::get_plan(
                 }
                 // if no open nodes in neighbourhood of x_node_ptr
                 if(y_min_node_ptr == nullptr)
+                {
                     continue;
-                std::cout << "Is collision free: "<<  is_collision_free(x_node_ptr, y_min_node_ptr) << "\n";
+                }
+
                 if(is_collision_free(x_node_ptr, y_min_node_ptr))
                 {
                     //make_y_node parent of x_node_ptr and set cost
@@ -162,7 +145,7 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 
         if(!open_new_set.empty())
         {
-            ROS_INFO("Adding new open set");
+            ROS_DEBUG("Adding new open set");
             open_set.insert(open_new_set.begin(), open_new_set.end());
             for (auto &node_ptr: open_new_set) {
                 open_queue.push(node_ptr);

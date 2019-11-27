@@ -1,16 +1,16 @@
 # Config File with ROS Parameters
 
 # No. of Samples for the FMT* Planner
-n_samples: 2000
+n_samples: 1000
 
 # Max Radius between two nodes to be qualified as neighbours (in m)
 near_radius: 1.0
 
 # Obstacle Inflation Radius (Note: Calculated In cells)
-obstacle_inflation_radius: 0
+obstacle_inflation_radius: 2
 
 # No. of Collision checks between 2 points
-n_collision_checks: 10
+n_collision_checks: 2
 
 # Goal Region Definition (Tolerance)
 goal_tolerance: 0.2
