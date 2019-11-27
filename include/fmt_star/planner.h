@@ -44,7 +44,7 @@ public:
     /// @param goal - (x, y) position of goal in map frame
     /// @return vector of (x, y) positions along the path from start to goal in map frame
     std::vector<std::array<double, 2>> get_plan(
-            const std::array<double, 2>& start, const std::array<double, 2>&goal) const;
+            const std::array<double, 2>& start, const std::array<double, 2>&goal);
 
     /// (Temporary Function: Only for Visualization) Returns all Sampled Nodes
     /// @return (x, y) of all nodes in the map frame
@@ -93,11 +93,22 @@ private:
     /// @param node - current node
     void add_near_nodes(Node* node);
 
+    /// Calculates distance between two nodes
+    /// \param node1
+    /// \param node2
+    /// \return dist
+    double get_node_to_node_cost(Node* node1, Node* node2);
+
+    /// Generates path from goal node to start node
+    /// \param goal_node
+    /// \return vector of (x,y) denoting path
+    std::vector<std::array<double,2>> generate_path(Node* goal_node);
+
     /// Check if there was a collision between two nodes
     /// @param node1
     /// @param node2
     /// @return return true if there was a collision between two nodes
-    bool is_collision_free(const Node& node1, const Node& node2);
+    bool is_collision_free(Node* node1, Node* node2);
 
     /// Get Row Major Index corresponding to the occupancy grid initialized in the planner class
     ///
