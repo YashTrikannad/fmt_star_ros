@@ -155,7 +155,7 @@ std::vector<std::array<double, 2>> Planner::get_plan(
         // No path found
         if(open_set.empty())
         {
-            ROS_ERROR("No Path Found");
+            ROS_ERROR("Open Set is Empty. Planner Failed to find a Path");
             return {};
         }
 
@@ -171,6 +171,18 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 void Planner::update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_grid)
 {
     occupancy_grid_ = occupancy_grid;
+}
+
+/// (Temporary Function: Only for Visualization) Returns all Sampled Nodes
+/// @return (x, y) of all nodes in the map frame
+std::vector<std::array<double, 2>> Planner::get_sampled_nodes()
+{
+    std::vector<std::array<double, 2>> sampled_nodes_xy;
+    for(const auto& node:sampled_nodes_)
+    {
+        sampled_nodes_xy.push_back({node.x, node.y});
+    }
+    return sampled_nodes_xy;
 }
 
 /// Check if there was a collision between two nodes (Internally does Obstacle Inflation)
@@ -203,14 +215,16 @@ bool Planner::is_collision_free(Node* node1, Node* node2) const
     return true;
 }
 
+/// Generates path from goal node to start node
+/// \param goal_node
+/// \return vector of (x,y) in map frame denoting path
 std::vector<std::array<double,2>> Planner::generate_path(fmt_star::Node *node)
 {
     std::vector<std::array<double,2>> path;
-    ROS_INFO("Path Found. Backtracking ... ");
+    ROS_INFO("Goal Reached. Backtracking ... ");
     while(node->parent_node!= nullptr)
     {
         std::array<double,2> coords = {node->x,node->y};
-        std::cout << "" << coords[0] << " " << coords[1] << std::endl;
         path.push_back(coords);
         node = node->parent_node;
     }

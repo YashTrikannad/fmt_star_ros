@@ -23,3 +23,6 @@ y_max: 10
 
 # Node Construction and Near Node Calculations
 online: false
+
+# Enable Visualization
+visualization: true

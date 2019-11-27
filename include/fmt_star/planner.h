@@ -58,15 +58,7 @@ public:
 
     /// (Temporary Function: Only for Visualization) Returns all Sampled Nodes
     /// @return (x, y) of all nodes in the map frame
-    std::vector<std::array<double, 2>> get_sampled_nodes()
-    {
-        std::vector<std::array<double, 2>> sampled_nodes_xy;
-        for(const auto& node:sampled_nodes_)
-        {
-            sampled_nodes_xy.push_back({node.x, node.y});
-        }
-        return sampled_nodes_xy;
-    }
+    std::vector<std::array<double, 2>> get_sampled_nodes();
 
 private:
     nav_msgs::OccupancyGrid occupancy_grid_;

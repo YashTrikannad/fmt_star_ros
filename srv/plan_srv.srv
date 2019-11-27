@@ -3,5 +3,3 @@ float64[] end_position
 ---
 float64[] path_x
 float64[] path_y
-float64[] x_nodes
-float64[] y_nodes
