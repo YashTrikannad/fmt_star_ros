@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 
     fmt_star::plan_srv srv_message;
     srv_message.request.start_position = std::vector<double>{0, 0};
-    srv_message.request.end_position = std::vector<double>{9.5, 0};
+    srv_message.request.end_position = std::vector<double>{9.5, 7};
 
     visualization_msgs::MarkerArray viz_msg;
 

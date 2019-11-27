@@ -22,6 +22,7 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
                  size_t n_collision_checks,
                  int obstacle_inflation_radius,
                  double goal_tolerance_,
+                 bool online,
                  const std::array<double, 4> &sampling_rectangle) :
         occupancy_grid_(std::move(occupancy_grid)),
         generator(rd_engine()),
@@ -39,6 +40,8 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
     std::uniform_real_distribution<>::param_type y_param(sampling_rectangle[2], sampling_rectangle[3]);
     dis_x.param(x_param);
     dis_y.param(y_param);
+
+
 
     setup_graph_nodes(no_of_nodes);
 }
@@ -62,7 +65,7 @@ std::vector<std::array<double, 2>> Planner::get_plan(
     };
     std::priority_queue<Node*, std::vector<Node*>, decltype(less)> open_queue(less);
 
-    // Construct start node,find neighbours and add to open set and queue
+    // Construct start node, find neighbours and add to open set and queue
     Node start_node = Node(start[0],start[1]);
     Node* start_node_ptr = &start_node;
     add_near_nodes(start_node_ptr);

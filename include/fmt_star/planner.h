@@ -44,7 +44,8 @@ public:
                     size_t n_collision_checks,
                     int obstacle_inflation_radius,
                     double goal_tolerance_,
-                    const std::array<double, 4>& sampling_rectangle);
+                    bool online,
+                    const std::array<double, 4>& sampling_rectangle = {});
 
     /// Updates the occupancy grid with the latest one
     /// @param occupancy_grid
