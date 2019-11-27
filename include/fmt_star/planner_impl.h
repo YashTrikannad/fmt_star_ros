@@ -58,7 +58,7 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 
     // Priority Queue for Storing Least Cost Nodes
     auto less = [&](const Node *left, const Node *right) {
-        return left->cost > right->cost;
+        return (left->g_cost+left->h_cost) > (right->g_cost+right->h_cost);
     };
     std::priority_queue<Node*, std::vector<Node*>, decltype(less)> open_queue(less);
 
@@ -86,6 +86,8 @@ std::vector<std::array<double, 2>> Planner::get_plan(
         goal_node_neighbor_ptr->near_nodes.emplace_back(&goal_node);
     }
 
+    start_node_ptr->h_cost = start_node_ptr->traversal_cost(goal_node_ptr);
+
     Node* z_node_ptr = start_node_ptr;
 
     // Until z is goal node
@@ -104,7 +106,6 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 
                 for (auto& y_node_ptr: x_node_ptr->near_nodes)
                 {
-
                     //for all open y_nodes in neighbourhood of unvisited x_node_ptr
                     if (open_set.find(y_node_ptr) != open_set.end())
                     {
@@ -113,8 +114,8 @@ std::vector<std::array<double, 2>> Planner::get_plan(
                         {
                             y_min_node_ptr = y_node_ptr;
                         }
-                        else if(y_min_node_ptr->cost + y_min_node_ptr->traversal_cost(x_node_ptr)
-                                > y_node_ptr->cost + y_node_ptr->traversal_cost(x_node_ptr))
+                        else if(y_min_node_ptr->g_cost + y_min_node_ptr->h_cost + y_min_node_ptr->traversal_cost(x_node_ptr)
+                                > y_node_ptr->g_cost + y_node_ptr->h_cost + y_node_ptr->traversal_cost(x_node_ptr))
                         {
                             y_min_node_ptr = y_node_ptr;
                         }
@@ -130,7 +131,8 @@ std::vector<std::array<double, 2>> Planner::get_plan(
                 {
                     //make_y_node parent of x_node_ptr and set cost
                     x_node_ptr->parent_node = y_min_node_ptr;
-                    x_node_ptr->cost = y_min_node_ptr->cost + y_min_node_ptr->traversal_cost(x_node_ptr);
+                    x_node_ptr->g_cost = y_min_node_ptr->g_cost + y_min_node_ptr->traversal_cost(x_node_ptr);
+                    x_node_ptr->h_cost = x_node_ptr->traversal_cost(goal_node_ptr);
 
                     open_new_set.insert(x_node_ptr);
                     unvisited_set.erase(x_node_ptr);

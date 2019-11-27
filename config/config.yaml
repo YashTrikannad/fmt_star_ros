@@ -1,7 +1,7 @@
 # Config File with ROS Parameters
 
 # No. of Samples for the FMT* Planner
-n_samples: 1000
+n_samples: 2000
 
 # Max Radius between two nodes to be qualified as neighbours (in m)
 near_radius: 1.0

@@ -11,20 +11,18 @@ int main(int argc, char **argv)
 
     fmt_star::plan_srv srv_message;
     srv_message.request.start_position = std::vector<double>{0, 0};
-    srv_message.request.end_position = std::vector<double>{0, 8.5};
+    srv_message.request.end_position = std::vector<double>{9.5, 0};
 
     visualization_msgs::MarkerArray viz_msg;
 
-    // Call the service and get a response
-//    while(true)
-//    {
-        if (client.call(srv_message))
-        {
-            ROS_INFO("Plan Recieved");
-        } else
-        {
-            ROS_ERROR("No Plan Recieved");
-        }
-//    }
+    if (client.call(srv_message))
+    {
+        ROS_INFO("Plan Recieved");
+    }
+    else
+    {
+        ROS_ERROR("No Plan Recieved");
+    }
+
     return 0;
 }

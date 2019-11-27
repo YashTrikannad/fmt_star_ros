@@ -10,11 +10,12 @@ namespace fmt_star
 
 struct Node
 {
-    Node(double x, double y) : x(x), y(y), cost(0.0), parent_node(nullptr), near_nodes({})
+    Node(double x, double y) : x(x), y(y), g_cost(0.0), h_cost(0.0), parent_node(nullptr), near_nodes({})
     {}
     double x;
     double y;
-    double cost;
+    double g_cost;
+    double h_cost;
     Node* parent_node;
     std::vector<Node*> near_nodes;
 
