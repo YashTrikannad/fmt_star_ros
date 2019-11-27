@@ -11,12 +11,14 @@ bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response
     double near_radius = 0;
     int n_collision_checks = 0;
     double obstacle_inflation_radius = 0;
+    double goal_tolerance = 0;
     std::array<double, 4> rectangular_sampling_limits{};
 
     nh.getParam("n_samples", n_samples);
     nh.getParam("near_radius", near_radius);
     nh.getParam("n_collision_checks", n_collision_checks);
     nh.getParam("obstacle_inflation_radius", obstacle_inflation_radius);
+    nh.getParam("goal_tolerance", goal_tolerance);
     nh.getParam("x_min", rectangular_sampling_limits[0]);
     nh.getParam("x_max", rectangular_sampling_limits[1]);
     nh.getParam("y_min", rectangular_sampling_limits[2]);
@@ -29,6 +31,7 @@ bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response
             near_radius,
             n_collision_checks,
             obstacle_inflation_radius,
+            goal_tolerance,
             rectangular_sampling_limits);
 
     const auto plan = planner.get_plan({request.start_position[0],request.start_position[1]} ,

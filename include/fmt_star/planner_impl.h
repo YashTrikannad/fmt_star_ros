@@ -1,7 +1,7 @@
 #ifndef SRC_PLANNER_IMPL_H
 #define SRC_PLANNER_IMPL_H
 
-#include "planner.h"
+//#include "planner.h"
 
 #include <unordered_set>
 #include <queue>
@@ -21,6 +21,7 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
                  double ball_radius,
                  size_t n_collision_checks,
                  int obstacle_inflation_radius,
+                 double goal_tolerance_,
                  const std::array<double, 4> &sampling_rectangle) :
         occupancy_grid_(std::move(occupancy_grid)),
         generator(rd_engine()),
@@ -43,95 +44,124 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
 
 /// This function runs the FMT star search and returns the path between the start and the goal
 std::vector<std::array<double, 2>> Planner::get_plan(
-        const std::array<double, 2> &start, const std::array<double, 2> &goal)///const
+        const std::array<double, 2> &start, const std::array<double, 2> &goal)
 {
-    //declare data structures
-    std::unordered_set<Node *> unvisited_set(sampled_nodes_.begin(),sampled_nodes_.end());
-    std::unordered_set<Node *> closed_set{};
-    std::unordered_set<Node *> open_set{};
-    std::unordered_set<Node *> open_new_set{};
+    // Initialize Data Structures used in FMT*
+    std::unordered_set<Node *> unvisited_set{};
+    for(auto &node: sampled_nodes_)
+    {
+        unvisited_set.insert(&node);
+    }
 
+    std::unordered_set<Node *> open_set{};
+
+    // Priority Queue for Storing Least Cost Nodes
     auto less = [&](const Node *left, const Node *right) {
         return left->cost > right->cost;
     };
     std::priority_queue<Node*, std::vector<Node*>, decltype(less)> open_queue(less);
 
-    //construct start node,find neighbours and add to open set and queue
-    Node* start_node = new Node(start[0],start[1]);
-    add_near_nodes(start_node);
-    open_set.insert(start_node);
-    open_queue.push(start_node);
+    // Construct start node,find neighbours and add to open set and queue
+    Node start_node = Node(start[0],start[1]);
+    Node* start_node_ptr = &start_node;
+    add_near_nodes(&start_node);
+    open_set.insert(&start_node);
+    open_queue.push(&start_node);
 
-    //add goal node to unvisited - no need to find neighbours for goal node(?)
-    unvisited_set.insert(new Node(goal[0],goal[1]));
+    // Add goal node to unvisited
+    Node goal_node = Node(goal[0],goal[1]);
+    unvisited_set.insert(&goal_node);
 
-    Node* z_node = start_node;
+    Node* z_node_ptr = start_node_ptr;
 
-    //till z is goal node
-    while(z_node->x != goal[0] || z_node->y != goal[1])
+    // Until z is goal node
+    while(z_node_ptr->traversal_cost(goal_node) > goal_tolerance_)
     {
+        std::cout << "z_node: " << z_node_ptr->x << " " << z_node_ptr->y << std::endl;
+        if(z_node_ptr->parent_node)
+        {
+            std::cout << "z_node parent: " << z_node_ptr->parent_node->x << " " << z_node_ptr->parent_node->y << std::endl;
+        }
+        else
+        {
+            ROS_INFO("No Parent");
+        }
+
+        std::unordered_set<Node *> open_new_set{};
         open_new_set.clear();
 
-        for(auto& x_node: z_node->near_nodes)
-        {   //for all unvisited nodes x_node in neighbourhood of z_node
-            if (unvisited_set.count(x_node))
-            {
-                // minimum cost node for x_node
-                Node* y_min_node = nullptr;
+        std::cout << "Z neighbor size: " << z_node_ptr->near_nodes.size() << std::endl;
 
-                for (auto& y_node: x_node->near_nodes)
-                {   //for all open y_node in neighbourhood of unvisited x_node
-                    if (open_set.count(y_node))
+        for(const auto& x_node_ptr: z_node_ptr->near_nodes)
+        {
+            ROS_INFO("Iterating over z_node neighbors");
+            //for all unvisited nodes x_node_ptr in neighbourhood of z_node_ptr
+            if (unvisited_set.find(x_node_ptr) != unvisited_set.end())
+            {
+                std::cout << "HI" << "\n";
+                // minimum cost node for x_node_ptr
+                Node* y_min_node_ptr = nullptr;
+
+                for (const auto& y_node_ptr: x_node_ptr->near_nodes)
+                {
+                    std::cout << "HI2" << "\n";
+                    //for all open y_nodes in neighbourhood of unvisited x_node_ptr
+                    if (open_set.find(y_node_ptr) != open_set.end())
                     {
-                        //find least cost path to x_node from open nodes y_node
-                        if(y_min_node == nullptr)
-                            y_min_node = y_node;
-                        else if(y_min_node->cost + get_node_to_node_cost(y_min_node,x_node)
-                                    > y_node->cost + get_node_to_node_cost(y_node,x_node))
-                            y_min_node = y_node;
+                        //find least cost path to x_node_ptr from open nodes y_node_ptr
+                        if(y_min_node_ptr == nullptr)
+                        {
+                            y_min_node_ptr = y_node_ptr;
+                        }
+                        else if(y_min_node_ptr->cost + y_min_node_ptr->traversal_cost(x_node_ptr)
+                                > y_node_ptr->cost + y_node_ptr->traversal_cost(x_node_ptr))
+                        {
+                            y_min_node_ptr = y_node_ptr;
+                        }
                     }
                 }
-                // if no open nodes in neighbourhood of x_node
-                if(y_min_node == nullptr)
+                // if no open nodes in neighbourhood of x_node_ptr
+                if(y_min_node_ptr == nullptr)
                     continue;
-                if(is_collision_free(x_node,y_min_node))///?????
+                std::cout << "Is collision free: "<<  is_collision_free(x_node_ptr, y_min_node_ptr) << "\n";
+                if(is_collision_free(x_node_ptr, y_min_node_ptr))
                 {
-                    //make_y_node parent of x_node and set cost
-                    x_node->parent_node = y_min_node;
-                    x_node->cost = y_min_node->cost + get_node_to_node_cost(x_node, y_min_node);
+                    //make_y_node parent of x_node_ptr and set cost
+                    x_node_ptr->parent_node = y_min_node_ptr;
+                    x_node_ptr->cost = y_min_node_ptr->cost + y_min_node_ptr->traversal_cost(x_node_ptr);
 
-                    open_new_set.insert(x_node);
-                    unvisited_set.erase(x_node);
-
+                    open_new_set.insert(x_node_ptr);
+                    unvisited_set.erase(x_node_ptr);
                 }
 
             }
         }
-        //remove z_node from open
-        open_set.erase(z_node);
+
+        // Remove z_node_ptr from open
+        open_set.erase(z_node_ptr);
         open_queue.pop();
 
-        //add z_node to closed
-        closed_set.insert(z_node);
-
         if(!open_new_set.empty())
-        {   //add open_new to open
+        {
+            ROS_INFO("Adding new open set");
             open_set.insert(open_new_set.begin(), open_new_set.end());
-            for (auto &node: open_new_set) {
-                open_queue.push(node);
+            for (auto &node_ptr: open_new_set) {
+                open_queue.push(node_ptr);
             }
         }
 
-        // no path found
+        // No path found
         if(open_set.empty())
+        {
+            ROS_ERROR("No Path Found");
             return {};
+        }
 
-        //least cost node in open
-        z_node = open_queue.top();
-
+        // Least cost node in open
+        z_node_ptr = open_queue.top();
     }
 
-    return generate_path(z_node);
+    return generate_path(z_node_ptr);
 }
 
 /// Updates the occupancy grid with the latest one
@@ -145,7 +175,7 @@ void Planner::update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_gri
 /// @param node1
 /// @param node2
 /// @return return true if there is no collision between two nodes
-bool Planner::is_collision_free(Node* node1, Node* node2)
+bool Planner::is_collision_free(Node* node1, Node* node2) const
 {
     double current_x = node1->x;
     double current_y = node1->y;
@@ -174,22 +204,16 @@ bool Planner::is_collision_free(Node* node1, Node* node2)
 std::vector<std::array<double,2>> Planner::generate_path(fmt_star::Node *node)
 {
     std::vector<std::array<double,2>> path;
-
+    ROS_INFO("Path Found. Backtracking ... ");
     while(node->parent_node!= nullptr)
     {
-        std::array<double,2> coods = {node->x,node->y};
-        //std::cout<<coods<<std::endl;
-
-        path.push_back(coods);
+        std::array<double,2> coords = {node->x,node->y};
+        std::cout << "" << coords[0] << " " << coords[1] << std::endl;
+        path.push_back(coords);
         node = node->parent_node;
-
     }
+    ROS_INFO("Backtracking successful");
     return path;
-}
-
-double Planner::get_node_to_node_cost(fmt_star::Node* node1, fmt_star::Node* node2)///make static?
-{
-    return sqrt(pow(node1->x - node2->x, 2) + pow(node1->y - node2->y, 2));
 }
 
 /// Sets up graph nodes - Samples N points and then constructs each node

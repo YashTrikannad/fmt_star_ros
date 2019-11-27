@@ -17,6 +17,15 @@ struct Node
     double cost;
     Node* parent_node;
     std::vector<Node*> near_nodes;
+
+    double traversal_cost(const Node& other_node) const
+    {
+        return sqrt(pow(x-other_node.x,2)+pow(y-other_node.y,2));
+    }
+    double traversal_cost(Node* other_node) const
+    {
+        return sqrt(pow(x-other_node->x,2)+pow(y-other_node->y,2));
+    }
 };
 
 class Planner
@@ -33,6 +42,7 @@ public:
                     double ball_radius,
                     size_t n_collision_checks,
                     int obstacle_inflation_radius,
+                    double goal_tolerance_,
                     const std::array<double, 4>& sampling_rectangle);
 
     /// Updates the occupancy grid with the latest one
@@ -68,6 +78,7 @@ private:
     double ball_radius_;
     size_t n_collision_checks_;
     int obstacle_inflation_radius_;
+    double goal_tolerance_;
 
     std::random_device rd_engine;
     std::mt19937 generator;
@@ -93,12 +104,6 @@ private:
     /// @param node - current node
     void add_near_nodes(Node* node);
 
-    /// Calculates distance between two nodes
-    /// \param node1
-    /// \param node2
-    /// \return dist
-    double get_node_to_node_cost(Node* node1, Node* node2);
-
     /// Generates path from goal node to start node
     /// \param goal_node
     /// \return vector of (x,y) denoting path
@@ -108,7 +113,7 @@ private:
     /// @param node1
     /// @param node2
     /// @return return true if there was a collision between two nodes
-    bool is_collision_free(Node* node1, Node* node2);
+    bool is_collision_free(Node* node1, Node* node2) const;
 
     /// Get Row Major Index corresponding to the occupancy grid initialized in the planner class
     ///
