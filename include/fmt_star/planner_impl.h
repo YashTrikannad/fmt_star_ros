@@ -27,7 +27,8 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
         generator(rd_engine()),
         ball_radius_(ball_radius),
         n_collision_checks_(n_collision_checks),
-        obstacle_inflation_radius_(obstacle_inflation_radius)
+        obstacle_inflation_radius_(obstacle_inflation_radius),
+        goal_tolerance_(goal_tolerance_)
 {
     occupancy_grid_cols_ = occupancy_grid_.info.width;
     occupancy_grid_resolution_ = occupancy_grid_.info.resolution;
@@ -47,13 +48,13 @@ std::vector<std::array<double, 2>> Planner::get_plan(
         const std::array<double, 2> &start, const std::array<double, 2> &goal)
 {
     // Initialize Data Structures used in FMT*
-    std::unordered_set<Node *> unvisited_set{};
+    std::unordered_set<Node*> unvisited_set{};
     for(auto &node: sampled_nodes_)
     {
         unvisited_set.insert(&node);
     }
 
-    std::unordered_set<Node *> open_set{};
+    std::unordered_set<Node*> open_set{};
 
     // Priority Queue for Storing Least Cost Nodes
     auto less = [&](const Node *left, const Node *right) {
@@ -64,13 +65,26 @@ std::vector<std::array<double, 2>> Planner::get_plan(
     // Construct start node,find neighbours and add to open set and queue
     Node start_node = Node(start[0],start[1]);
     Node* start_node_ptr = &start_node;
-    add_near_nodes(&start_node);
-    open_set.insert(&start_node);
-    open_queue.push(&start_node);
+    add_near_nodes(start_node_ptr);
+
+    for(const auto& start_node_neighbor_ptr: start_node_ptr->near_nodes)
+    {
+        start_node_neighbor_ptr->near_nodes.emplace_back(start_node_ptr);
+    }
+
+    open_set.insert(start_node_ptr);
+    open_queue.push(start_node_ptr);
 
     // Add goal node to unvisited
     Node goal_node = Node(goal[0],goal[1]);
-    unvisited_set.insert(&goal_node);
+    Node* goal_node_ptr = &goal_node;
+    add_near_nodes(goal_node_ptr);
+    unvisited_set.insert(goal_node_ptr);
+
+    for(const auto& goal_node_neighbor_ptr: goal_node_ptr->near_nodes)
+    {
+        goal_node_neighbor_ptr->near_nodes.emplace_back(&goal_node);
+    }
 
     Node* z_node_ptr = start_node_ptr;
 
@@ -102,12 +116,17 @@ std::vector<std::array<double, 2>> Planner::get_plan(
                 // minimum cost node for x_node_ptr
                 Node* y_min_node_ptr = nullptr;
 
-                for (const auto& y_node_ptr: x_node_ptr->near_nodes)
+                for (auto& y_node_ptr: x_node_ptr->near_nodes)
                 {
+                    std::cout << "y_node_ptr: " << y_node_ptr->x << " " << y_node_ptr->y << std::endl;
                     std::cout << "HI2" << "\n";
+
+                    std::cout << "Open Set Size" << open_set.size() << "\n";
+
                     //for all open y_nodes in neighbourhood of unvisited x_node_ptr
                     if (open_set.find(y_node_ptr) != open_set.end())
                     {
+                        std::cout << "FOUND" << "\n";
                         //find least cost path to x_node_ptr from open nodes y_node_ptr
                         if(y_min_node_ptr == nullptr)
                         {
@@ -256,7 +275,7 @@ void Planner::add_near_nodes(Node* node)
     {
         if(sqrt(pow(node->x - sample_node.x, 2) + pow(node->y - sample_node.y, 2)) < ball_radius_)
         {
-            node->near_nodes.emplace_back(&sample_node);
+            node->near_nodes.push_back(&sample_node);
         }
     }
 }

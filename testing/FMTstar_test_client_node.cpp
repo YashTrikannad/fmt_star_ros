@@ -12,14 +12,14 @@ int main(int argc, char **argv)
     // Get Start and End Co-ordinates
     fmt_star::plan_srv srv_message;
     srv_message.request.start_position = std::vector<double>{0, 0};
-    srv_message.request.end_position = std::vector<double>{5, 0};;
+    srv_message.request.end_position = std::vector<double>{7, 0};;
 
     ros::Publisher pub = n.advertise<visualization_msgs::MarkerArray>("sampled_nodes", 1000);
 
     visualization_msgs::MarkerArray viz_msg;
-
-    while(ros::ok())
-    {
+//
+//    while(ros::ok())
+//    {
         // Call the service and get a response
         if (client.call(srv_message))
         {
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
         {
             ROS_ERROR("No Plan Recieved");
         }
-    }
+//    }
 
     return 0;
 }

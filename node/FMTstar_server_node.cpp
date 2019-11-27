@@ -10,7 +10,7 @@ bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response
     int n_samples = 0;
     double near_radius = 0;
     int n_collision_checks = 0;
-    double obstacle_inflation_radius = 0;
+    int obstacle_inflation_radius = 0;
     double goal_tolerance = 0;
     std::array<double, 4> rectangular_sampling_limits{};
 
