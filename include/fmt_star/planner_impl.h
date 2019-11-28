@@ -22,9 +22,12 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
                  size_t n_collision_checks,
                  int obstacle_inflation_radius,
                  double goal_tolerance_,
+                 double hg_ratio,
                  bool online,
                  const std::array<double, 4> &sampling_rectangle,
-                 ros::Publisher* tree_visualizer) :
+                 bool visualization,
+                 ros::Publisher* tree_visualizer,
+                 ros::Publisher* path_visualizer) :
         occupancy_grid_(std::move(occupancy_grid)),
         no_of_nodes_(no_of_nodes),
         generator(rd_engine()),
@@ -32,7 +35,11 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
         n_collision_checks_(n_collision_checks),
         obstacle_inflation_radius_(obstacle_inflation_radius),
         goal_tolerance_(goal_tolerance_),
-        online_(online)
+        hg_ratio_(hg_ratio),
+        online_(online),
+        visualization_(visualization),
+        tree_pub_(tree_visualizer),
+        path_pub_(path_visualizer)
 {
     occupancy_grid_cols_ = occupancy_grid_.info.width;
     occupancy_grid_resolution_ = occupancy_grid_.info.resolution;
@@ -69,7 +76,7 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 
     // Priority Queue for Storing Least Cost Nodes
     auto less = [&](const Node *left, const Node *right) {
-        return (left->g_cost+left->h_cost) > (right->g_cost+right->h_cost);
+        return (left->g_cost+ hg_ratio_*left->h_cost) > (right->g_cost+hg_ratio_*right->h_cost);
     };
     std::priority_queue<Node*, std::vector<Node*>, decltype(less)> open_queue(less);
 
@@ -135,8 +142,8 @@ std::vector<std::array<double, 2>> Planner::get_plan(
                         {
                             y_min_node_ptr = y_node_ptr;
                         }
-                        else if(y_min_node_ptr->g_cost + y_min_node_ptr->h_cost + y_min_node_ptr->traversal_cost(x_node_ptr)
-                                > y_node_ptr->g_cost + y_node_ptr->h_cost + y_node_ptr->traversal_cost(x_node_ptr))
+                        else if(y_min_node_ptr->g_cost + y_min_node_ptr->traversal_cost(x_node_ptr)
+                                > y_node_ptr->g_cost + y_node_ptr->traversal_cost(x_node_ptr))
                         {
                             y_min_node_ptr = y_node_ptr;
                         }
@@ -256,6 +263,11 @@ std::vector<std::array<double,2>> Planner::generate_path(fmt_star::Node *node)
         node = node->parent_node;
     }
     ROS_INFO("Plan Ready");
+    visualize_path(path);
+    if(visualization_)
+    {
+        visualize_tree();
+    }
     return path;
 }
 
@@ -319,6 +331,67 @@ size_t Planner::row_major_index(double x, double y)
     const auto x_index = static_cast<size_t>((x - occupancy_grid_origin_x_)/occupancy_grid_resolution_);
     const auto y_index = static_cast<size_t>((y - occupancy_grid_origin_y_)/occupancy_grid_resolution_);
     return y_index*occupancy_grid_cols_ + x_index;
+}
+
+/// Visualize Input Vector of 2 element array
+/// @param input
+void Planner::visualize_path(const std::vector<std::array<double,2>>& input)
+{
+    visualization_msgs::Marker line;
+    line.header.frame_id = "/map";
+    line.header.stamp = ros::Time::now();
+    line.ns = "path";
+    line.action = visualization_msgs::Marker::ADD;
+    line.pose.orientation.w = 1.0;
+    line.id = 1;
+    line.type = visualization_msgs::Marker::LINE_STRIP;
+    line.scale.x = 0.04;
+    line.color.r = 1.0f;
+    line.color.a = 1.0;
+    line.lifetime = ros::Duration(10);
+    for(const auto& node: input)
+    {
+        geometry_msgs::Point point;
+        point.x = node[0];
+        point.y = node[1];
+        line.points.push_back(point);
+    }
+    path_pub_->publish(line);
+}
+
+/// Visualize Tree
+void Planner::visualize_tree()
+{
+    visualization_msgs::MarkerArray tree;
+    int i = 1;
+    for(const auto& sampled_node: sampled_nodes_)
+    {
+        if(sampled_node.parent_node)
+        {
+            visualization_msgs::Marker line;
+            line.header.frame_id = "/map";
+            line.header.stamp = ros::Time::now();
+            line.ns = "tree";
+            line.action = visualization_msgs::Marker::ADD;
+            line.pose.orientation.w = 1.0;
+            line.id = i; i++;
+            line.type = visualization_msgs::Marker::LINE_STRIP;
+            line.scale.x = 0.02;
+            line.color.b = 1.0f;
+            line.color.a = 1.0;
+            geometry_msgs::Point parent;
+            parent.x = sampled_node.parent_node->x;
+            parent.y = sampled_node.parent_node->y;
+            line.points.push_back(parent);
+            geometry_msgs::Point child;
+            child.x = sampled_node.x;
+            child.y = sampled_node.y;
+            line.points.push_back(child);
+            line.lifetime = ros::Duration(10);
+            tree.markers.push_back(std::move(line));
+        }
+    }
+    tree_pub_->publish(tree);
 }
 
 } // namespace fmt_star

@@ -21,9 +21,10 @@ public:
         nh_.getParam("y_max", rectangular_sampling_limits_[3]);
         nh_.getParam("online", online_);
         nh_.getParam("visualization", visualization_);
+        nh_.getParam("hg_ratio", hg_ratio_);
 
-        node_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("sampled_nodes", 1000);
-        tree_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("tree", 1000);
+        tree_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("tree_viz", 1000);
+        path_pub_ = nh_.advertise<visualization_msgs::Marker>("path_viz", 1000);
     }
 
     bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response& response)
@@ -38,18 +39,16 @@ public:
                                   n_collision_checks_,
                                   obstacle_inflation_radius_,
                                   goal_tolerance_,
+                                  hg_ratio_,
                                   online_,
                                   rectangular_sampling_limits_,
-                                  &tree_pub_);
+                                  visualization_,
+                                  &tree_pub_,
+                                  &path_pub_);
 
         const auto plan = planner.get_plan({request.start_position.pose.position.x,request.start_position.pose.position.y},
                                            {request.end_position.pose.position.x,request.end_position.pose.position.y});
 
-        const auto sampled_nodes = planner.get_sampled_nodes();
-        if(!sampled_nodes.empty() && visualization_)
-        {
-            visualize_sample_nodes(sampled_nodes);
-        }
 
         if(plan.empty())
         {
@@ -75,7 +74,7 @@ public:
 
 private:
     ros::NodeHandle nh_;
-    ros::Publisher node_pub_;
+    ros::Publisher path_pub_;
     ros::Publisher tree_pub_;
 
     int n_samples_;
@@ -84,37 +83,11 @@ private:
     int obstacle_inflation_radius_;
     double goal_tolerance_;
     bool online_;
+    double hg_ratio_;
     std::array<double, 4> rectangular_sampling_limits_;
 
     bool visualization_;
     visualization_msgs::MarkerArray viz_msg;
-
-    void visualize_sample_nodes(const std::vector<std::array<double, 2>>& sample_nodes)
-    {
-        viz_msg.markers.clear();
-        for (size_t i = 0; i < sample_nodes.size(); i++)
-        {
-            visualization_msgs::Marker point;
-            point.header.frame_id = "/map";
-            point.header.stamp = ros::Time::now();
-            point.ns = "points";
-            point.action = visualization_msgs::Marker::ADD;
-            point.pose.orientation.w = 1.0;
-            point.id = i;
-            point.type = visualization_msgs::Marker::SPHERE;
-            point.scale.x = 0.2;
-            point.scale.y = 0.2;
-            point.scale.z = 0.2;
-            point.color.r = 1.0f;
-            point.color.g = 0.0f;
-            point.color.a = 1.0;
-            point.pose.position.x = sample_nodes[i][0];
-            point.pose.position.y = sample_nodes[i][1];
-            point.lifetime = ros::Duration(10);
-            viz_msg.markers.push_back(std::move(point));
-        }
-        node_pub_.publish(viz_msg);
-    }
 };
 
 

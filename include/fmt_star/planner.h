@@ -43,10 +43,13 @@ public:
                     double ball_radius,
                     size_t n_collision_checks,
                     int obstacle_inflation_radius,
-                    double goal_tolerance_,
+                    double goal_tolerance,
+                    double hg_ratio,
                     bool online,
                     const std::array<double, 4>& sampling_rectangle,
-                    ros::Publisher* tree_visualizer);
+                    bool visualization,
+                    ros::Publisher* tree_visualizer,
+                    ros::Publisher* path_visualizer);
 
     /// Updates the occupancy grid with the latest one
     /// @param occupancy_grid
@@ -64,6 +67,9 @@ public:
     std::vector<std::array<double, 2>> get_sampled_nodes();
 
 private:
+    ros::Publisher* tree_pub_;
+    ros::Publisher* path_pub_;
+
     nav_msgs::OccupancyGrid occupancy_grid_;
     size_t occupancy_grid_cols_;
     double occupancy_grid_resolution_;
@@ -75,7 +81,9 @@ private:
     size_t n_collision_checks_;
     int obstacle_inflation_radius_;
     double goal_tolerance_;
+    double hg_ratio_;
     bool online_;
+    bool visualization_;
 
     Node* start_node_ptr_;
     Node* goal_node_ptr_;
@@ -116,6 +124,13 @@ private:
     /// @param y - y position in map frame
     /// @return row major index
     size_t row_major_index(double x, double y);
+
+    /// Visualize Input Vector of 2 element array
+    /// @param input
+    void visualize_path(const std::vector<std::array<double,2>>& input);
+
+    /// Visualize Tree
+    void visualize_tree();
 };
 
 } // namespace fmt_star
