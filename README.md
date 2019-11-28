@@ -2,6 +2,10 @@
 
 This repository provides a path-planning ROS service which uses Heuristic FMT*(Forward Marching Tree) planner for 2D ROS occupancy grids in ROS to generate asymptotically optimal paths at a rate much faster than state of the art algorithms like RRT* and PRM*.
 
+<p align="center"><img src="fmtstar.gif" width="700" height="700">
+</p>
+ 
+
 ### Steps to run it:
 1. Clone the Repository
 
