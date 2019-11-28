@@ -249,13 +249,13 @@ bool Planner::is_collision_free(Node* node1, Node* node2) const
 std::vector<std::array<double,2>> Planner::generate_path(fmt_star::Node *node)
 {
     std::vector<std::array<double,2>> path;
-    ROS_INFO("Goal Reached. Backtracking ... ");
+    ROS_DEBUG("Goal Reached. Backtracking ... ");
     while(node->parent_node!= nullptr)
     {
         path.emplace_back(std::array<double,2>({node->x,node->y}));
         node = node->parent_node;
     }
-    ROS_INFO("Backtracking successful");
+    ROS_INFO("Plan Ready");
     return path;
 }
 

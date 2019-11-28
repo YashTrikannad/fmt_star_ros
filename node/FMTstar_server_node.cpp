@@ -28,6 +28,8 @@ public:
 
     bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response& response)
     {
+        ROS_INFO("Start and Goal Recieved by the Planner");
+
         nav_msgs::OccupancyGrid input_map_  = *(ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map",ros::Duration(2)));
 
         fmt_star::Planner planner(input_map_,
@@ -40,8 +42,8 @@ public:
                                   rectangular_sampling_limits_,
                                   &tree_pub_);
 
-        const auto plan = planner.get_plan({request.start_position[0],request.start_position[1]} ,
-                                           {request.end_position[0],request.end_position[1]});
+        const auto plan = planner.get_plan({request.start_position.pose.position.x,request.start_position.pose.position.y},
+                                           {request.end_position.pose.position.x,request.end_position.pose.position.y});
 
         const auto sampled_nodes = planner.get_sampled_nodes();
         if(!sampled_nodes.empty() && visualization_)
@@ -55,11 +57,19 @@ public:
             return false;
         }
         ROS_INFO("Sending Plan");
+
+        nav_msgs::Path path;
+        path.header.frame_id = "/map";
+        path.header.stamp = ros::Time::now();
         for(const auto& node: plan)
         {
-            response.path_x.emplace_back(node[0]);
-            response.path_y.emplace_back(node[1]);
+            geometry_msgs::PoseStamped path_node;
+            path_node.pose.position.x = node[0];
+            path_node.pose.position.y = node[1];
+            path_node.pose.orientation.w = 1;
+            path.poses.emplace_back(path_node);
         }
+        response.path = path;
         return true;
     }
 

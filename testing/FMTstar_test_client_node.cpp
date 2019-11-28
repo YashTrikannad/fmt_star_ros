@@ -10,10 +10,25 @@ int main(int argc, char **argv)
     ros::ServiceClient client = n.serviceClient<fmt_star::plan_srv>("FMTstar_search");
 
     fmt_star::plan_srv srv_message;
-    srv_message.request.start_position = std::vector<double>{0, 0};
-    srv_message.request.end_position = std::vector<double>{9.5, 7};
 
-    visualization_msgs::MarkerArray viz_msg;
+    const auto start = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("gt_pose",ros::Duration(2));
+    ROS_INFO("Send a 2d Nav Goal");
+    const auto goal = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("move_base_simple/goal",ros::Duration(20));
+
+
+    if(!start)
+    {
+        ROS_ERROR("Unable to Plan. Start not recieved");
+    }
+    else if(!goal)
+    {
+        ROS_ERROR("Unable to Plan. Goal not recieved");
+    }
+    else
+    {
+        srv_message.request.start_position = *start;
+        srv_message.request.end_position = *goal;
+    }
 
     if (client.call(srv_message))
     {

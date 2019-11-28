@@ -1,5 +1,4 @@
-float64[] start_position
-float64[] end_position
+geometry_msgs/PoseStamped start_position
+geometry_msgs/PoseStamped end_position
 ---
-float64[] path_x
-float64[] path_y
+nav_msgs/Path path
