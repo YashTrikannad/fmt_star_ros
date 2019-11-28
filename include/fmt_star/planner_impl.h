@@ -23,7 +23,8 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
                  int obstacle_inflation_radius,
                  double goal_tolerance_,
                  bool online,
-                 const std::array<double, 4> &sampling_rectangle) :
+                 const std::array<double, 4> &sampling_rectangle,
+                 ros::Publisher* tree_visualizer) :
         occupancy_grid_(std::move(occupancy_grid)),
         no_of_nodes_(no_of_nodes),
         generator(rd_engine()),
@@ -318,17 +319,6 @@ size_t Planner::row_major_index(double x, double y)
     const auto x_index = static_cast<size_t>((x - occupancy_grid_origin_x_)/occupancy_grid_resolution_);
     const auto y_index = static_cast<size_t>((y - occupancy_grid_origin_y_)/occupancy_grid_resolution_);
     return y_index*occupancy_grid_cols_ + x_index;
-}
-
-/// Get the (x, y) position in map frame given the row major index
-/// @param row_major_index of position in the map
-/// @return (x, y) position in map
-std::array<double, 2> Planner::get_xy(size_t row_major_index)
-{
-    std::array<double, 2> xy_coordinates{};
-    xy_coordinates[1] = static_cast<int>(row_major_index/occupancy_grid_cols_);
-    xy_coordinates[0] = row_major_index - (xy_coordinates[1] * occupancy_grid_cols_);
-    return xy_coordinates;
 }
 
 } // namespace fmt_star

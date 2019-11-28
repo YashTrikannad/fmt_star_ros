@@ -23,6 +23,7 @@ public:
         nh_.getParam("visualization", visualization_);
 
         node_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("sampled_nodes", 1000);
+        tree_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("tree", 1000);
     }
 
     bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response& response)
@@ -36,7 +37,8 @@ public:
                                   obstacle_inflation_radius_,
                                   goal_tolerance_,
                                   online_,
-                                  rectangular_sampling_limits_);
+                                  rectangular_sampling_limits_,
+                                  &tree_pub_);
 
         const auto plan = planner.get_plan({request.start_position[0],request.start_position[1]} ,
                                            {request.end_position[0],request.end_position[1]});
@@ -64,6 +66,7 @@ public:
 private:
     ros::NodeHandle nh_;
     ros::Publisher node_pub_;
+    ros::Publisher tree_pub_;
 
     int n_samples_;
     double near_radius_;

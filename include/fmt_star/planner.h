@@ -45,7 +45,8 @@ public:
                     int obstacle_inflation_radius,
                     double goal_tolerance_,
                     bool online,
-                    const std::array<double, 4>& sampling_rectangle);
+                    const std::array<double, 4>& sampling_rectangle,
+                    ros::Publisher* tree_visualizer);
 
     /// Updates the occupancy grid with the latest one
     /// @param occupancy_grid
@@ -58,7 +59,7 @@ public:
     std::vector<std::array<double, 2>> get_plan(
             const std::array<double, 2>& start, const std::array<double, 2>&goal);
 
-    /// (Temporary Function: Only for Visualization) Returns all Sampled Nodes
+    /// Returns all Sampled Nodes
     /// @return (x, y) of all nodes in the map frame
     std::vector<std::array<double, 2>> get_sampled_nodes();
 
@@ -98,10 +99,6 @@ private:
     /// @param node - current node
     void add_near_nodes(Node* node);
 
-    /// Returns the vector of near nodes of the input node
-    /// @param node - current node
-    std::vector<Node*> find_near_nodes(Node* node);
-
     /// Generates path from goal node to start node
     /// \param goal_node
     /// \return vector of (x,y) denoting path
@@ -119,11 +116,6 @@ private:
     /// @param y - y position in map frame
     /// @return row major index
     size_t row_major_index(double x, double y);
-
-    /// Get the (x, y) position in map frame given the row major index
-    /// @param row_major_index of position in the map
-    /// @return (x, y) position in map
-    std::array<double, 2> get_xy(size_t row_major_index);
 };
 
 } // namespace fmt_star
