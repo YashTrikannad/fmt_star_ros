@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <queue>
 #include <utility>
+#include <algorithm>
 
 namespace fmt_star
 {
@@ -16,7 +17,7 @@ namespace fmt_star
 /// @param ball_radius - radius to be considered for a sample to be near neighbor
 /// @param obstacle_inflation_radius - safety boundary around obstacles
 /// @param sampling_rectangle - Rectangle defining the boundary for sampling nodes
-Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
+Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
                  size_t no_of_nodes,
                  double ball_radius,
                  size_t n_collision_checks,
@@ -28,7 +29,7 @@ Planner::Planner(nav_msgs::OccupancyGrid occupancy_grid,
                  bool visualization,
                  ros::Publisher* tree_visualizer,
                  ros::Publisher* path_visualizer) :
-        occupancy_grid_(std::move(occupancy_grid)),
+        occupancy_grid_(*occupancy_grid),
         no_of_nodes_(no_of_nodes),
         generator(rd_engine()),
         ball_radius_(ball_radius),
@@ -194,9 +195,9 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 
 /// Updates the occupancy grid with the latest one
 /// @param occupancy_grid
-void Planner::update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_grid)
+void Planner::update_occupancy_grid(nav_msgs::OccupancyGridConstPtr occupancy_grid)
 {
-    occupancy_grid_ = occupancy_grid;
+    occupancy_grid_ = *occupancy_grid;
     sampled_nodes_.clear();
     if(!online_)
     {
@@ -208,18 +209,7 @@ void Planner::update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_gri
     }
 }
 
-/// (Temporary Function: Only for Visualization) Returns all Sampled Nodes
-/// @return (x, y) of all nodes in the map frame
-std::vector<std::array<double, 2>> Planner::get_sampled_nodes()
-{
-    std::vector<std::array<double, 2>> sampled_nodes_xy;
-    for(const auto& node:sampled_nodes_)
-    {
-        sampled_nodes_xy.push_back({node.x, node.y});
-    }
-    return sampled_nodes_xy;
-}
-
+// TODO: Improve over this naive method for collision checking as well as obstacle inflation
 /// Check if there was a collision between two nodes (Internally does Obstacle Inflation)
 /// @param node1
 /// @param node2
@@ -263,6 +253,7 @@ std::vector<std::array<double,2>> Planner::generate_path(fmt_star::Node *node)
         node = node->parent_node;
     }
     ROS_INFO("Plan Ready");
+    std::reverse(path.begin(), path.end());
     visualize_path(path);
     if(visualization_)
     {
@@ -348,7 +339,11 @@ void Planner::visualize_path(const std::vector<std::array<double,2>>& input)
     line.scale.x = 0.04;
     line.color.r = 1.0f;
     line.color.a = 1.0;
-    line.lifetime = ros::Duration(10);
+    line.lifetime = ros::Duration(5);
+    geometry_msgs::Point start_point;
+    start_point.x = start_node_ptr_->x;
+    start_point.y = start_node_ptr_->y;
+    line.points.push_back(start_point);
     for(const auto& node: input)
     {
         geometry_msgs::Point point;

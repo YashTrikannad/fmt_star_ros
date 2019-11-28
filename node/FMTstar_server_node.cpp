@@ -8,54 +8,67 @@
 class PlannerService
 {
 public:
-    PlannerService(ros::NodeHandle &nh): nh_(nh), rectangular_sampling_limits_({})
+    PlannerService(ros::NodeHandle &nh): nh_(nh)
     {
-        nh_.getParam("n_samples", n_samples_);
-        nh_.getParam("near_radius", near_radius_);
-        nh_.getParam("n_collision_checks", n_collision_checks_);
-        nh_.getParam("obstacle_inflation_radius", obstacle_inflation_radius_);
-        nh_.getParam("goal_tolerance", goal_tolerance_);
-        nh_.getParam("x_min", rectangular_sampling_limits_[0]);
-        nh_.getParam("x_max", rectangular_sampling_limits_[1]);
-        nh_.getParam("y_min", rectangular_sampling_limits_[2]);
-        nh_.getParam("y_max", rectangular_sampling_limits_[3]);
-        nh_.getParam("online", online_);
-        nh_.getParam("visualization", visualization_);
-        nh_.getParam("hg_ratio", hg_ratio_);
+        bool visualization, online;
+        int n_samples, n_collision_checks, obstacle_inflation_radius;
+        double near_radius, goal_tolerance, hg_ratio;
+        std::array<double, 4> rectangular_sampling_limits{};
+
+        nh_.getParam("n_samples", n_samples);
+        nh_.getParam("near_radius", near_radius);
+        nh_.getParam("n_collision_checks", n_collision_checks);
+        nh_.getParam("obstacle_inflation_radius", obstacle_inflation_radius);
+        nh_.getParam("goal_tolerance", goal_tolerance);
+        nh_.getParam("x_min", rectangular_sampling_limits[0]);
+        nh_.getParam("x_max", rectangular_sampling_limits[1]);
+        nh_.getParam("y_min", rectangular_sampling_limits[2]);
+        nh_.getParam("y_max", rectangular_sampling_limits[3]);
+        nh_.getParam("online", online);
+        nh_.getParam("visualization", visualization);
+        nh_.getParam("hg_ratio", hg_ratio);
 
         tree_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("tree_viz", 1000);
         path_pub_ = nh_.advertise<visualization_msgs::Marker>("path_viz", 1000);
+
+        input_map_ = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(2));
+
+        planner_ = std::make_unique<fmt_star::Planner>(input_map_,
+                                                       n_samples,
+                                                       near_radius,
+                                                       n_collision_checks,
+                                                       obstacle_inflation_radius,
+                                                       goal_tolerance,
+                                                       hg_ratio,
+                                                       online,
+                                                       rectangular_sampling_limits,
+                                                       visualization,
+                                                       &tree_pub_,
+                                                       &path_pub_);
     }
 
     bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response& response)
     {
         ROS_INFO("Start and Goal Recieved by the Planner");
+        if(request.update_map)
+        {
+            input_map_ = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(1));
+            if(!input_map_)
+            {
+                ROS_ERROR("Updated Input Map not Recieved");
+                return false;
+            }
+            planner_->update_occupancy_grid(input_map_);
+        }
 
-        nav_msgs::OccupancyGrid input_map_  = *(ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map",ros::Duration(2)));
-
-        fmt_star::Planner planner(input_map_,
-                                  n_samples_,
-                                  near_radius_,
-                                  n_collision_checks_,
-                                  obstacle_inflation_radius_,
-                                  goal_tolerance_,
-                                  hg_ratio_,
-                                  online_,
-                                  rectangular_sampling_limits_,
-                                  visualization_,
-                                  &tree_pub_,
-                                  &path_pub_);
-
-        const auto plan = planner.get_plan({request.start_position.pose.position.x,request.start_position.pose.position.y},
+        const auto plan = planner_->get_plan({request.start_position.pose.position.x,request.start_position.pose.position.y},
                                            {request.end_position.pose.position.x,request.end_position.pose.position.y});
-
 
         if(plan.empty())
         {
             ROS_INFO("Plan not found");
             return false;
         }
-        ROS_INFO("Sending Plan");
 
         nav_msgs::Path path;
         path.header.frame_id = "/map";
@@ -69,6 +82,7 @@ public:
             path.poses.emplace_back(path_node);
         }
         response.path = path;
+        ROS_INFO("Sent Plan");
         return true;
     }
 
@@ -77,17 +91,8 @@ private:
     ros::Publisher path_pub_;
     ros::Publisher tree_pub_;
 
-    int n_samples_;
-    double near_radius_;
-    int n_collision_checks_;
-    int obstacle_inflation_radius_;
-    double goal_tolerance_;
-    bool online_;
-    double hg_ratio_;
-    std::array<double, 4> rectangular_sampling_limits_;
-
-    bool visualization_;
-    visualization_msgs::MarkerArray viz_msg;
+    std::unique_ptr<fmt_star::Planner> planner_;
+    nav_msgs::OccupancyGridConstPtr input_map_;
 };
 
 

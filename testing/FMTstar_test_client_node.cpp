@@ -15,7 +15,6 @@ int main(int argc, char **argv)
     ROS_INFO("Send a 2d Nav Goal");
     const auto goal = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("move_base_simple/goal",ros::Duration(20));
 
-
     if(!start)
     {
         ROS_ERROR("Unable to Plan. Start not recieved");
@@ -28,6 +27,7 @@ int main(int argc, char **argv)
     {
         srv_message.request.start_position = *start;
         srv_message.request.end_position = *goal;
+        srv_message.request.update_map = true;
     }
 
     if (client.call(srv_message))

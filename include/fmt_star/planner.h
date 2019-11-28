@@ -38,7 +38,7 @@ public:
     /// @param ball_radius - radius to be considered for a sample to be near neighbor
     /// @param obstacle_inflation_radius - safety boundary around obstacles
     /// @param sampling_rectangle - Rectangle defining the boundary for sampling nodes
-    explicit Planner(nav_msgs::OccupancyGrid occupancy_grid,
+    explicit Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
                     size_t no_of_nodes,
                     double ball_radius,
                     size_t n_collision_checks,
@@ -53,7 +53,7 @@ public:
 
     /// Updates the occupancy grid with the latest one
     /// @param occupancy_grid
-    void update_occupancy_grid(const nav_msgs::OccupancyGrid& occupancy_grid);
+    void update_occupancy_grid(nav_msgs::OccupancyGridConstPtr occupancy_grid);
 
     /// This function runs the FMT star search and returns the path between the start and the goal
     /// @param start - (x, y) position of start in map frame
@@ -61,10 +61,6 @@ public:
     /// @return vector of (x, y) positions along the path from start to goal in map frame
     std::vector<std::array<double, 2>> get_plan(
             const std::array<double, 2>& start, const std::array<double, 2>&goal);
-
-    /// Returns all Sampled Nodes
-    /// @return (x, y) of all nodes in the map frame
-    std::vector<std::array<double, 2>> get_sampled_nodes();
 
 private:
     ros::Publisher* tree_pub_;

@@ -1,4 +1,5 @@
 geometry_msgs/PoseStamped start_position
 geometry_msgs/PoseStamped end_position
+bool update_map
 ---
 nav_msgs/Path path
