@@ -1,19 +1,19 @@
 # Config File with ROS Parameters
 
 # No. of Samples for the FMT* Planner
-n_samples: 3000
+n_samples: 4000
 
 # Max Radius between two nodes to be qualified as neighbours (in m)
 near_radius: 1
 
 # Obstacle Inflation Radius (Note: Calculated In cells)
-obstacle_inflation_radius: 5
+obstacle_inflation_radius: 6
 
 # No. of Collision checks between 2 points
 n_collision_checks: 5
 
 # Goal Region Definition (Tolerance)
-goal_tolerance: 0.2
+goal_tolerance: 0.4
 
 # h/g ratio Heursitic->Cost-from-Root Ratio in calculating costs
 # Note: For asymptotic optimality, keep the value between 0->1. For no heuristic, make it 0

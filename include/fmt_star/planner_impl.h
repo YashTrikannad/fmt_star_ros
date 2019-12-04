@@ -118,6 +118,12 @@ std::vector<std::array<double, 2>> Planner::get_plan(
     // Until z is goal node
     while(z_node_ptr->traversal_cost(goal_node) > goal_tolerance_)
     {
+        if(visualization_)
+        {
+            visualize_tree();
+            ros::Duration(0.01).sleep();
+        }
+
         std::unordered_set<Node *> open_new_set{};
         open_new_set.clear();
 
@@ -254,11 +260,17 @@ std::vector<std::array<double,2>> Planner::generate_path(fmt_star::Node *node)
     }
     ROS_INFO("Plan Ready");
     std::reverse(path.begin(), path.end());
-    visualize_path(path);
     if(visualization_)
     {
-        visualize_tree();
+        std::vector<std::array<double,2>> visualization_path;
+        for(const auto& path_node: path)
+        {
+            visualization_path.emplace_back(path_node);
+            visualize_path(visualization_path);
+            ros::Duration(0.01).sleep();
+        }
     }
+    visualize_path(path);
     return path;
 }
 
@@ -336,7 +348,7 @@ void Planner::visualize_path(const std::vector<std::array<double,2>>& input)
     line.pose.orientation.w = 1.0;
     line.id = 1;
     line.type = visualization_msgs::Marker::LINE_STRIP;
-    line.scale.x = 0.04;
+    line.scale.x = 0.1;
     line.color.r = 1.0f;
     line.color.a = 1.0;
     line.lifetime = ros::Duration(5);
