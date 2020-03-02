@@ -10,9 +10,9 @@ class PlannerService
 public:
     PlannerService(ros::NodeHandle &nh): nh_(nh)
     {
-        bool visualization, online;
+        bool visualization, online, minimal_sampling;
         int n_samples, n_collision_checks, obstacle_inflation_radius;
-        double near_radius, goal_tolerance, hg_ratio;
+        double near_radius, goal_tolerance, hg_ratio, sampling_tolerance;
         std::array<double, 4> rectangular_sampling_limits{};
 
         nh_.getParam("n_samples", n_samples);
@@ -24,9 +24,11 @@ public:
         nh_.getParam("x_max", rectangular_sampling_limits[1]);
         nh_.getParam("y_min", rectangular_sampling_limits[2]);
         nh_.getParam("y_max", rectangular_sampling_limits[3]);
+        nh_.getParam("minimal_sampling", minimal_sampling);
         nh_.getParam("online", online);
         nh_.getParam("visualization", visualization);
         nh_.getParam("hg_ratio", hg_ratio);
+        nh_.getParam("sampling_tolerance", sampling_tolerance);
 
         tree_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("tree_viz", 1000);
         path_pub_ = nh_.advertise<visualization_msgs::Marker>("path_viz", 1000);
@@ -43,6 +45,8 @@ public:
                                                        hg_ratio,
                                                        online,
                                                        rectangular_sampling_limits,
+                                                       minimal_sampling,
+                                                       sampling_tolerance,
                                                        visualization,
                                                        &samples_pub_,
                                                        &tree_pub_,

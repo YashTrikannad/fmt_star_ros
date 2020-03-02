@@ -48,6 +48,8 @@ public:
                     double hg_ratio,
                     bool online,
                     const std::array<double, 4>& sampling_rectangle,
+                    bool minimal_sampling,
+                    double sampling_tolerance,
                     bool visualization,
                     ros::Publisher* samples_pub,
                     ros::Publisher* tree_visualizer,
@@ -84,6 +86,7 @@ private:
     double goal_tolerance_;
     double hg_ratio_;
     bool online_;
+    bool minimal_sampling_;
     bool visualization_;
 
     Node* start_node_ptr_;
@@ -104,6 +107,8 @@ private:
     double goal_node_y_;
     std::uniform_real_distribution<double> dis_x;
     std::uniform_real_distribution<double> dis_y;
+
+    double sampling_tolerance_;
 
     /// Refreshes the samples around the current start node
     void refresh_sampling();

@@ -26,6 +26,8 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
                  double hg_ratio,
                  bool online,
                  const std::array<double, 4> &sampling_rectangle,
+                 bool minimal_sampling,
+                 double sampling_tolerance,
                  bool visualization,
                  ros::Publisher* samples_visualizer,
                  ros::Publisher* tree_visualizer,
@@ -39,6 +41,8 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
         goal_tolerance_(goal_tolerance_),
         hg_ratio_(hg_ratio),
         online_(online),
+        minimal_sampling_(minimal_sampling),
+        sampling_tolerance_(sampling_tolerance),
         visualization_(visualization),
         start_node_ptr_(nullptr),
         goal_node_ptr_(nullptr),
@@ -362,6 +366,20 @@ void Planner::refresh_sampling()
     ROS_DEBUG("x max %f", x_max_);
     ROS_DEBUG("y min %f", y_min_);
     ROS_DEBUG("y max %f", y_max_);
+
+    if(minimal_sampling_)
+    {
+        double less_x = start_node_x_ > goal_node_x_ ? goal_node_x_ : start_node_x_;
+        double less_y = start_node_y_ > goal_node_y_ ? goal_node_y_ : start_node_y_;
+        double more_x =  start_node_x_ > goal_node_x_? start_node_x_ : goal_node_x_;
+        double more_y = start_node_y_ > goal_node_y_ ? start_node_y_ : goal_node_y_;
+
+        std::uniform_real_distribution<>::param_type x_param(less_x - sampling_tolerance_, more_x + sampling_tolerance_);
+        std::uniform_real_distribution<>::param_type y_param(less_y - sampling_tolerance_, more_y + sampling_tolerance_);
+        dis_x.param(x_param);
+        dis_y.param(y_param);
+        return;
+    }
 
     std::uniform_real_distribution<>::param_type x_param(start_node_x_ + x_min_, start_node_x_ + x_max_);
     std::uniform_real_distribution<>::param_type y_param(start_node_y_ + y_min_, start_node_y_ + y_max_);
