@@ -30,6 +30,7 @@ public:
 
         tree_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("tree_viz", 1000);
         path_pub_ = nh_.advertise<visualization_msgs::Marker>("path_viz", 1000);
+        samples_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("samples_viz", 1000);
 
         input_map_ = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(2));
 
@@ -43,6 +44,7 @@ public:
                                                        online,
                                                        rectangular_sampling_limits,
                                                        visualization,
+                                                       &samples_pub_,
                                                        &tree_pub_,
                                                        &path_pub_);
     }
@@ -50,15 +52,19 @@ public:
     bool get_plan(fmt_star::plan_srv::Request& request, fmt_star::plan_srv::Response& response)
     {
         ROS_INFO("Start and Goal Recieved by the Planner");
-        if(request.update_map)
+        if(request.update_samples)
         {
-            input_map_ = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(1));
-            if(!input_map_)
+            if(request.update_map)
             {
-                ROS_ERROR("Updated Input Map not Recieved");
-                return false;
+                input_map_ = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("map", ros::Duration(1));
+                if(!input_map_)
+                {
+                    ROS_ERROR("Updated Input Map not Recieved");
+                    return false;
+                }
             }
-            planner_->update_occupancy_grid(input_map_);
+            planner_->update_occupancy_grid(input_map_, {request.start_position.pose.position.x,request.start_position.pose.position.y},
+                                            {request.end_position.pose.position.x,request.end_position.pose.position.y});
         }
 
         const auto plan = planner_->get_plan({request.start_position.pose.position.x,request.start_position.pose.position.y},
@@ -90,6 +96,7 @@ private:
     ros::NodeHandle nh_;
     ros::Publisher path_pub_;
     ros::Publisher tree_pub_;
+    ros::Publisher samples_pub_;
 
     std::unique_ptr<fmt_star::Planner> planner_;
     nav_msgs::OccupancyGridConstPtr input_map_;

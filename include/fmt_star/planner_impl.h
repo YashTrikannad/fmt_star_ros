@@ -27,6 +27,7 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
                  bool online,
                  const std::array<double, 4> &sampling_rectangle,
                  bool visualization,
+                 ros::Publisher* samples_visualizer,
                  ros::Publisher* tree_visualizer,
                  ros::Publisher* path_visualizer) :
         occupancy_grid_(*occupancy_grid),
@@ -39,19 +40,29 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
         hg_ratio_(hg_ratio),
         online_(online),
         visualization_(visualization),
+        start_node_ptr_(nullptr),
+        goal_node_ptr_(nullptr),
+        samples_pub_(samples_visualizer),
         tree_pub_(tree_visualizer),
         path_pub_(path_visualizer)
 {
+    ROS_DEBUG("Initializing Planner");
     occupancy_grid_cols_ = occupancy_grid_.info.width;
     occupancy_grid_resolution_ = occupancy_grid_.info.resolution;
     occupancy_grid_origin_x_ = occupancy_grid_.info.origin.position.x;
     occupancy_grid_origin_y_ = occupancy_grid_.info.origin.position.y;
 
-    std::uniform_real_distribution<>::param_type x_param(sampling_rectangle[0], sampling_rectangle[1]);
-    std::uniform_real_distribution<>::param_type y_param(sampling_rectangle[2], sampling_rectangle[3]);
+    x_min_ = sampling_rectangle[0];
+    x_max_ = sampling_rectangle[1];
+    y_min_ = sampling_rectangle[2];
+    y_max_ = sampling_rectangle[3];
+
+    std::uniform_real_distribution<>::param_type x_param(x_min_, x_max_);
+    std::uniform_real_distribution<>::param_type y_param(y_min_, y_max_);
     dis_x.param(x_param);
     dis_y.param(y_param);
 
+    ROS_DEBUG("Constructing Graph");
     if(!online)
     {
         construct_nodes_and_add_near_neighbors();
@@ -60,6 +71,7 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
     {
         construct_nodes();
     }
+    ROS_DEBUG("Planner Initialized");
 }
 
 /// This function runs the FMT star search and returns the path between the start and the goal
@@ -67,6 +79,7 @@ std::vector<std::array<double, 2>> Planner::get_plan(
         const std::array<double, 2> &start, const std::array<double, 2> &goal)
 {
     // Initialize Data Structures used in FMT*
+    ROS_DEBUG("Planning Started");
     std::unordered_set<Node*> unvisited_set{};
     for(auto &node: sampled_nodes_)
     {
@@ -80,7 +93,6 @@ std::vector<std::array<double, 2>> Planner::get_plan(
         return (left->g_cost+ hg_ratio_*left->h_cost) > (right->g_cost+hg_ratio_*right->h_cost);
     };
     std::priority_queue<Node*, std::vector<Node*>, decltype(less)> open_queue(less);
-
     // Construct start node, find neighbours and add to open set and queue
     Node start_node = Node(start[0],start[1]);
     start_node_ptr_ = &start_node;
@@ -96,7 +108,6 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 
     open_set.insert(start_node_ptr_);
     open_queue.push(start_node_ptr_);
-
     // Add goal node to unvisited
     Node goal_node = Node(goal[0],goal[1]);
     goal_node_ptr_ = &goal_node;
@@ -201,10 +212,17 @@ std::vector<std::array<double, 2>> Planner::get_plan(
 
 /// Updates the occupancy grid with the latest one
 /// @param occupancy_grid
-void Planner::update_occupancy_grid(nav_msgs::OccupancyGridConstPtr occupancy_grid)
+void Planner::update_occupancy_grid(nav_msgs::OccupancyGridConstPtr occupancy_grid,
+                                    const std::array<double, 2>& start,
+                                    const std::array<double, 2>& goal)
 {
     occupancy_grid_ = *occupancy_grid;
     sampled_nodes_.clear();
+    start_node_x_ = start[0];
+    start_node_y_ = start[1];
+    goal_node_x_ = goal[0];
+    goal_node_y_ = goal[1];
+    refresh_sampling();
     if(!online_)
     {
         construct_nodes_and_add_near_neighbors();
@@ -213,6 +231,8 @@ void Planner::update_occupancy_grid(nav_msgs::OccupancyGridConstPtr occupancy_gr
     {
         construct_nodes();
     }
+    visualize_samples();
+    ROS_DEBUG("Updated Occupancy Grid");
 }
 
 // TODO: Improve over this naive method for collision checking as well as obstacle inflation
@@ -292,12 +312,17 @@ void Planner::construct_nodes()
     {
         auto x_map = dis_x(generator);
         auto y_map = dis_y(generator);
-        while(occupancy_grid_.data[row_major_index(x_map, y_map)] == 100)
+        if(x_map < 1 || y_map < 1 || x_map >= occupancy_grid_.info.width*occupancy_grid_resolution_-1
+            || y_map >= occupancy_grid_.info.height*occupancy_grid_resolution_-1)
         {
-            x_map = dis_x(generator);
-            y_map = dis_y(generator);
-        };
-        sampled_nodes_.emplace_back(Node{x_map, y_map});
+            iter--;
+            continue;
+        }
+        const auto rmi = row_major_index(x_map, y_map);
+        if(rmi < occupancy_grid_.data.size() || occupancy_grid_.data[rmi] == 100)
+        {
+            sampled_nodes_.emplace_back(Node{x_map, y_map});
+        }
     }
 }
 
@@ -326,6 +351,22 @@ void Planner::add_near_nodes(Node* node)
             node->near_nodes.push_back(goal_node_ptr_);
         }
     }
+}
+
+/// Refreshes the samples around the current start node
+void Planner::refresh_sampling()
+{
+    ROS_DEBUG("start node x %f", start_node_x_);
+    ROS_DEBUG("start node y %f", start_node_y_);
+    ROS_DEBUG("x min %f", x_min_);
+    ROS_DEBUG("x max %f", x_max_);
+    ROS_DEBUG("y min %f", y_min_);
+    ROS_DEBUG("y max %f", y_max_);
+
+    std::uniform_real_distribution<>::param_type x_param(start_node_x_ + x_min_, start_node_x_ + x_max_);
+    std::uniform_real_distribution<>::param_type y_param(start_node_y_ + y_min_, start_node_y_ + y_max_);
+    dis_x.param(x_param);
+    dis_y.param(y_param);
 }
 
 /// Get Row Major Index corresponding to the occupancy grid initialized in the planner class
@@ -399,6 +440,41 @@ void Planner::visualize_tree()
         }
     }
     tree_pub_->publish(tree);
+}
+
+/// Visualize all the Samples
+void Planner::visualize_samples()
+{
+    visualization_msgs::MarkerArray samples;
+    int i = 1;
+    for(const auto& sampled_node: sampled_nodes_)
+    {
+        visualization_msgs::Marker point;
+        point.header.frame_id = "/map";
+        point.header.stamp = ros::Time::now();
+        point.ns = "samples";
+        point.action = visualization_msgs::Marker::ADD;
+        point.id = i; i++;
+        point.type = visualization_msgs::Marker::SPHERE;
+        point.pose.position.x = sampled_node.x;
+        point.pose.position.y = sampled_node.y;
+        point.pose.position.z = 0;
+        point.pose.orientation.x = 0.0;
+        point.pose.orientation.y = 0.0;
+        point.pose.orientation.z = 0.0;
+        point.pose.orientation.w = 1.0;
+        point.scale.x = 0.1;
+        point.scale.y = 0.1;
+        point.scale.z = 0.1;
+        point.color.a = 1.0;
+        point.color.r = 0.0;
+        point.color.g = 1.0;
+        point.color.b = 0.0;
+        point.lifetime = ros::Duration(10);
+        samples.markers.emplace_back(std::move(point));
+    }
+    ROS_DEBUG("Publishing %i sample points", static_cast<int>(sampled_nodes_.size()));
+    samples_pub_->publish(samples);
 }
 
 } // namespace fmt_star

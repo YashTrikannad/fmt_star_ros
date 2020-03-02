@@ -27,7 +27,8 @@ int main(int argc, char **argv)
     {
         srv_message.request.start_position = *start;
         srv_message.request.end_position = *goal;
-        srv_message.request.update_map = true;
+        srv_message.request.update_map = false;
+        srv_message.request.update_samples = true;
     }
 
     if (client.call(srv_message))

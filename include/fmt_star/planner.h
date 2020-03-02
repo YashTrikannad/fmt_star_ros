@@ -10,6 +10,7 @@ namespace fmt_star
 
 struct Node
 {
+    Node() = default;
     Node(double x, double y) : x(x), y(y), g_cost(0.0), h_cost(0.0), parent_node(nullptr), near_nodes({})
     {}
     double x;
@@ -48,12 +49,15 @@ public:
                     bool online,
                     const std::array<double, 4>& sampling_rectangle,
                     bool visualization,
+                    ros::Publisher* samples_pub,
                     ros::Publisher* tree_visualizer,
                     ros::Publisher* path_visualizer);
 
     /// Updates the occupancy grid with the latest one
     /// @param occupancy_grid
-    void update_occupancy_grid(nav_msgs::OccupancyGridConstPtr occupancy_grid);
+    void update_occupancy_grid(nav_msgs::OccupancyGridConstPtr occupancy_grid,
+                               const std::array<double, 2>& start,
+                               const std::array<double, 2>& goal);
 
     /// This function runs the FMT star search and returns the path between the start and the goal
     /// @param start - (x, y) position of start in map frame
@@ -63,6 +67,7 @@ public:
             const std::array<double, 2>& start, const std::array<double, 2>&goal);
 
 private:
+    ros::Publisher* samples_pub_;
     ros::Publisher* tree_pub_;
     ros::Publisher* path_pub_;
 
@@ -89,8 +94,19 @@ private:
 
     std::vector<Node> sampled_nodes_;
 
+    double x_min_;
+    double x_max_;
+    double y_min_;
+    double y_max_;
+    double start_node_x_;
+    double start_node_y_;
+    double goal_node_x_;
+    double goal_node_y_;
     std::uniform_real_distribution<double> dis_x;
     std::uniform_real_distribution<double> dis_y;
+
+    /// Refreshes the samples around the current start node
+    void refresh_sampling();
 
     /// Sets up graph nodes - Samples N points and then constructs each node
     void construct_nodes_and_add_near_neighbors();
@@ -127,6 +143,9 @@ private:
 
     /// Visualize Tree
     void visualize_tree();
+
+    /// Visualize all the Samples
+    void visualize_samples();
 };
 
 } // namespace fmt_star
