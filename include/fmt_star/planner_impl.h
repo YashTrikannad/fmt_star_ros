@@ -50,7 +50,7 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
         tree_pub_(tree_visualizer),
         path_pub_(path_visualizer)
 {
-    ROS_DEBUG("Initializing Planner");
+    ROS_INFO("Initializing Planner");
     occupancy_grid_cols_ = occupancy_grid_.info.width;
     occupancy_grid_resolution_ = occupancy_grid_.info.resolution;
     occupancy_grid_origin_x_ = occupancy_grid_.info.origin.position.x;
@@ -61,12 +61,17 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
     y_min_ = sampling_rectangle[2];
     y_max_ = sampling_rectangle[3];
 
+    ROS_INFO("x_min: %f", x_min_);
+    ROS_INFO("x_max: %f", x_max_);
+    ROS_INFO("y_min: %f", y_min_);
+    ROS_INFO("y_max: %f", y_max_);
+
     std::uniform_real_distribution<>::param_type x_param(x_min_, x_max_);
     std::uniform_real_distribution<>::param_type y_param(y_min_, y_max_);
     dis_x.param(x_param);
     dis_y.param(y_param);
 
-    ROS_DEBUG("Constructing Graph");
+    ROS_INFO("Constructing Graph");
     if(!online)
     {
         construct_nodes_and_add_near_neighbors();
@@ -75,7 +80,7 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
     {
         construct_nodes();
     }
-    ROS_DEBUG("Planner Initialized");
+    ROS_INFO("Planner Initialized");
 }
 
 /// This function runs the FMT star search and returns the path between the start and the goal

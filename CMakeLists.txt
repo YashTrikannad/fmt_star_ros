@@ -13,7 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   geometry_msgs
+  genmsg
   message_generation
+  actionlib
+  actionlib_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -63,11 +66,7 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+ add_action_files(DIRECTORY action FILES plan.action)
 
 # Generate added messages and services with any dependencies listed here
  generate_messages(
@@ -75,6 +74,7 @@ find_package(catkin REQUIRED COMPONENTS
    std_msgs
    nav_msgs
    geometry_msgs
+   actionlib_msgs
  )
 
 ################################################
@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS message_generation roscpp std_msgs
+  CATKIN_DEPENDS message_generation roscpp std_msgs actionlib_msgs
 )
 
 ###########
@@ -135,7 +135,9 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(FMTstar_server_node node/FMTstar_server_node.cpp)
+add_executable(fmt_star_server node/fmt_star_server.cpp)
 add_executable(FMTstar_test_client_node testing/FMTstar_test_client_node.cpp)
+add_executable(fmt_star_test_client testing/fmt_star_test_client.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -147,16 +149,15 @@ add_executable(FMTstar_test_client_node testing/FMTstar_test_client_node.cpp)
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(FMTstar_server_node ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(fmt_star_server ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(FMTstar_test_client_node ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(fmt_star_test_client ${PROJECT_NAME}_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(FMTstar_server_node
-${catkin_LIBRARIES}
-)
-
-target_link_libraries(FMTstar_test_client_node
-${catkin_LIBRARIES}
-)
+target_link_libraries(FMTstar_server_node ${catkin_LIBRARIES})
+target_link_libraries(fmt_star_server ${catkin_LIBRARIES})
+target_link_libraries(FMTstar_test_client_node ${catkin_LIBRARIES})
+target_link_libraries(fmt_star_test_client ${catkin_LIBRARIES})
 
 #############
 ## Install ##

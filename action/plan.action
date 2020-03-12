@@ -1,0 +1,10 @@
+# Define the goal
+geometry_msgs/PoseStamped start_position
+geometry_msgs/PoseStamped end_position
+bool update_map
+bool update_samples
+---
+# Define the result
+nav_msgs/Path path
+---
+# Define the feedback
