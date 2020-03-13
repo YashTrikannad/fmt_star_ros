@@ -60,10 +60,9 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
- add_service_files(
-   FILES
-   plan_srv.srv
- )
+# add_service_files(
+#   FILES
+# )
 
 ## Generate actions in the 'action' folder
  add_action_files(DIRECTORY action FILES plan.action)
@@ -134,9 +133,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(FMTstar_server_node node/FMTstar_server_node.cpp)
 add_executable(fmt_star_server node/fmt_star_server.cpp)
-add_executable(FMTstar_test_client_node testing/FMTstar_test_client_node.cpp)
 add_executable(fmt_star_test_client testing/fmt_star_test_client.cpp)
 
 ## Rename C++ executable without prefix
@@ -148,15 +145,11 @@ add_executable(fmt_star_test_client testing/fmt_star_test_client.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(FMTstar_server_node ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(fmt_star_server ${PROJECT_NAME}_generate_messages_cpp)
-add_dependencies(FMTstar_test_client_node ${PROJECT_NAME}_generate_messages_cpp)
 add_dependencies(fmt_star_test_client ${PROJECT_NAME}_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(FMTstar_server_node ${catkin_LIBRARIES})
 target_link_libraries(fmt_star_server ${catkin_LIBRARIES})
-target_link_libraries(FMTstar_test_client_node ${catkin_LIBRARIES})
 target_link_libraries(fmt_star_test_client ${catkin_LIBRARIES})
 
 #############

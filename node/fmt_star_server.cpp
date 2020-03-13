@@ -96,9 +96,10 @@ private:
         const auto plan = planner_->get_plan({goal->start_position.pose.position.x,goal->start_position.pose.position.y},
                                              {goal->end_position.pose.position.x,goal->end_position.pose.position.y});
 
-        if(!success)
+        if(!success || plan.empty())
         {
             ROS_ERROR("Not able to find a path.");
+            as_.setAborted(result_);
         }
         else
         {

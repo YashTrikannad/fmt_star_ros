@@ -1,7 +1,7 @@
 # Config File with ROS Parameters
 
 # No. of Samples for the FMT* Planner
-n_samples: 10000
+n_samples: 20000
 
 # Max Radius between two nodes to be qualified as neighbours (in m)
 near_radius: 0.8
@@ -19,10 +19,11 @@ goal_tolerance: 0.5
 # Note: For asymptotic optimality, keep the value between 0->1. For no heuristic, make it 0
 hg_ratio: 1.0
 
-# Rectangle for Uniform Sampling of Nodes with respect to origin of map(in m) [To be used if minimal_sampling is false]
-x_min: 0
+# Rectangle for Uniform Sampling of Nodes with respect to current pose of robot in map(in m)
+# [Valid only if minimal_sampling is false]
+x_min: -20
 x_max: 20
-y_min: 0
+y_min: -20
 y_max: 20
 
 # Node Construction and Near Node Calculations
