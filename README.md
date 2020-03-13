@@ -1,6 +1,6 @@
 # FMTstar-planner
 
-This repository provides a path-planning ROS service which uses Heuristic FMT*(Forward Marching Tree) planner for 2D ROS occupancy grids in ROS to generate asymptotically optimal paths at a rate much faster than state of the art algorithms like RRT* and PRM*.
+This repository provides a path-planning ROS Action Server which uses Heuristic FMT*(Forward Marching Tree) planner for 2D ROS occupancy grids in ROS to generate asymptotically optimal paths at a rate much faster than state of the art algorithms like RRT* and PRM*.
 
 <p align="center"><img src="fmtstar.gif" width="700" height="700">
 </p>
@@ -25,7 +25,7 @@ This repository provides a path-planning ROS service which uses Heuristic FMT*(F
 
 > roslaunch racecar_simulator simulator.launch
 
-3. Open a new terminal. Run the Server Node
+3. Open a new terminal. Run the Action Server Node
 
 > cd catkin_ws
 
@@ -39,7 +39,7 @@ This repository provides a path-planning ROS service which uses Heuristic FMT*(F
 
 > source devel/setup.bash
 
-> rosrun fmt_star FMTstar_test_client_node
+> rosrun fmt_star fmt_star_test_client
 
 
 Configuration Parameters can be changed in the config/config.yaml file to get the desired behavior and efficiency
@@ -49,64 +49,76 @@ Configuration Parameters can be changed in the config/config.yaml file to get th
 ```
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
-#include "fmt_star/plan_srv.h"
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/client/terminal_state.h>
+#include <fmt_star/planAction.h>
 ```
 
 Include the required headers
 
 ```
-int main(int argc, char **argv)
+int main (int argc, char **argv)
 {
-    ros::init(argc, argv, "FMTstar_test_client");
-
-    ros::NodeHandle n;
-    ros::ServiceClient client = n.serviceClient<fmt_star::plan_srv>("FMTstar_search");
+    ros::init(argc, argv, "fmt_star_test_client");
+    actionlib::SimpleActionClient<fmt_star::planAction> ac("fmt_star_server", true);
+    
+    ROS_INFO("Waiting for action server to start.");
+    ac.waitForServer();
+    ROS_INFO("Action server started, sending goal.");
 ```
 
-Initialize your client node where you want to recieve the path (You may already be doing this where you want to call this.) and add add this service that the client node will be pinging to for recieveing the path messages.
+Initialize your client node where you want to recieve the path and add add this action service that the client node will be connecting to for recieveing the path messages.
 
 ```
-    fmt_star::plan_srv srv_message;
-    const auto start = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("gt_pose",ros::Duration(2));
+    const auto start = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("gt_pose_1",ros::Duration(2));
     ROS_INFO("Send a 2d Nav Goal");
-    const auto goal = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("move_base_simple/goal",ros::Duration(20));
+    const auto end = ros::topic::waitForMessage<geometry_msgs::PoseStamped>("move_base_simple/goal",ros::Duration(20));
 ```
 
 Get your start and goal messages which are *geometry_msgs::PoseStamped*
 
 ```
+    fmt_star::planGoal goal;
+
     if(!start)
     {
         ROS_ERROR("Unable to Plan. Start not recieved");
     }
-    else if(!goal)
+    else if(!end)
     {
         ROS_ERROR("Unable to Plan. Goal not recieved");
     }
     else
     {
-        srv_message.request.start_position = *start;
-        srv_message.request.end_position = *goal;
-    } 
+        goal.start_position = *start;
+        goal.end_position = *end;
+        goal.update_map = false;
+        goal.update_samples = true;
+    }
 ```
 
 Assign your start and goal to the service request
 
 ```
-    if (client.call(srv_message))
+    ac.sendGoal(goal);
+
+    //wait for the action to return
+    bool finished_before_timeout = ac.waitForResult(ros::Duration(30.0));
+    
+    if (finished_before_timeout)
     {
-        ROS_INFO("Plan Recieved");
-        // Plan available here.
+        actionlib::SimpleClientGoalState state = ac.getState();
+        ROS_INFO("Action finished. Plan Recieved: %s",state.toString().c_str());
     }
     else
     {
-        ROS_ERROR("No Plan Recieved");
+        ROS_INFO("Action did not finish before the time out.");
     }
-
+    
     return 0;
 }
-
 ```
+Send the Goal to the action server and wait for the result.
 
-Your Plan will be available in *srv_message.response.path*. You can find the [Test Client Example](https://github.com/YashTrikannad/FMTstar-planner/blob/master/testing/FMTstar_test_client_node.cpp) here
+You can find the [Test Client Example](https://github.com/YashTrikannad/FMTstar-planner/blob/master/testing/fmt_star_test_client.cpp) here
 
