@@ -51,35 +51,46 @@ Planner::Planner(nav_msgs::OccupancyGridConstPtr occupancy_grid,
         path_pub_(path_visualizer)
 {
     ROS_INFO("Initializing Planner");
+
+    // Get Map Setting
     occupancy_grid_cols_ = occupancy_grid_.info.width;
     occupancy_grid_resolution_ = occupancy_grid_.info.resolution;
     occupancy_grid_origin_x_ = occupancy_grid_.info.origin.position.x;
     occupancy_grid_origin_y_ = occupancy_grid_.info.origin.position.y;
 
-    x_min_ = sampling_rectangle[0];
-    x_max_ = sampling_rectangle[1];
-    y_min_ = sampling_rectangle[2];
-    y_max_ = sampling_rectangle[3];
-
-    ROS_INFO("x_min: %f", x_min_);
-    ROS_INFO("x_max: %f", x_max_);
-    ROS_INFO("y_min: %f", y_min_);
-    ROS_INFO("y_max: %f", y_max_);
-
-    std::uniform_real_distribution<>::param_type x_param(x_min_, x_max_);
-    std::uniform_real_distribution<>::param_type y_param(y_min_, y_max_);
-    dis_x.param(x_param);
-    dis_y.param(y_param);
-
-    ROS_INFO("Constructing Graph");
-    if(!online)
+    // Bounding Box in Map for Sampling if
+    if(!minimal_sampling_)
     {
-        construct_nodes_and_add_near_neighbors();
+        x_min_ = sampling_rectangle[0];
+        x_max_ = sampling_rectangle[1];
+        y_min_ = sampling_rectangle[2];
+        y_max_ = sampling_rectangle[3];
+
+        ROS_INFO("x_min: %f", x_min_);
+        ROS_INFO("x_max: %f", x_max_);
+        ROS_INFO("y_min: %f", y_min_);
+        ROS_INFO("y_max: %f", y_max_);
+
+        std::uniform_real_distribution<>::param_type x_param(x_min_, x_max_);
+        std::uniform_real_distribution<>::param_type y_param(y_min_, y_max_);
+        dis_x.param(x_param);
+        dis_y.param(y_param);
+
+        ROS_INFO("Constructing Graph");
+        if(!online)
+        {
+            construct_nodes_and_add_near_neighbors();
+        }
+        else
+        {
+            construct_nodes();
+        }
     }
     else
     {
-        construct_nodes();
+        ROS_INFO("Minimal Sampling is On. Waiting for Goal to construct the sampling graph.");
     }
+
     ROS_INFO("Planner Initialized");
 }
 
@@ -321,8 +332,9 @@ void Planner::construct_nodes()
     {
         auto x_map = dis_x(generator);
         auto y_map = dis_y(generator);
-        if(x_map < 1 || y_map < 1 || x_map >= occupancy_grid_.info.width*occupancy_grid_resolution_-1
-            || y_map >= occupancy_grid_.info.height*occupancy_grid_resolution_-1)
+        if(x_map < occupancy_grid_origin_x_ || y_map < occupancy_grid_origin_y_ ||
+        x_map >= occupancy_grid_origin_x_ + occupancy_grid_.info.width*occupancy_grid_resolution_ ||
+        y_map >= occupancy_grid_origin_y_ + occupancy_grid_.info.height*occupancy_grid_resolution_)
         {
             iter--;
             continue;
@@ -367,6 +379,8 @@ void Planner::refresh_sampling()
 {
     ROS_DEBUG("start node x %f", start_node_x_);
     ROS_DEBUG("start node y %f", start_node_y_);
+    ROS_DEBUG("goal node x %f", goal_node_x_);
+    ROS_DEBUG("goal node y %f", goal_node_y_);
     ROS_DEBUG("x min %f", x_min_);
     ROS_DEBUG("x max %f", x_max_);
     ROS_DEBUG("y min %f", y_min_);

@@ -93,6 +93,9 @@ private:
             }
         }
 
+        ROS_DEBUG("Start Position: (%f, %f)", goal->start_position.pose.position.x,goal->start_position.pose.position.y);
+        ROS_DEBUG("Goal Position: (%f, %f)", goal->end_position.pose.position.x,goal->end_position.pose.position.y);
+
         const auto plan = planner_->get_plan({goal->start_position.pose.position.x,goal->start_position.pose.position.y},
                                              {goal->end_position.pose.position.x,goal->end_position.pose.position.y});
 

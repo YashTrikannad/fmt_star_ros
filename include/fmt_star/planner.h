@@ -1,9 +1,9 @@
 #ifndef SRC_PLANNER_H
 #define SRC_PLANNER_H
 
-#include <ros/ros.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <random>
+#include <ros/ros.h>
 
 namespace fmt_star
 {
