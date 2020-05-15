@@ -8,6 +8,9 @@
 #include <utility>
 #include <algorithm>
 
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+
 namespace fmt_star
 {
 
@@ -512,6 +515,42 @@ void Planner::visualize_samples()
     }
     ROS_DEBUG("Publishing %i sample points", static_cast<int>(sampled_nodes_.size()));
     samples_pub_->publish(samples);
+}
+
+/// Helper function to convert sequence of user coordinates from non ros map to ros coordinates
+/// \note This function is only useful for scaling and flipping of coordinates based on the parameters passed to the
+/// function
+/// \param nonros_coords - sequence of coords in nonros coord system
+/// \param nonros_map_width - width of map in nonros coord system
+/// \param nonros_map_height - height of map in nonros coord system
+/// \param resolution - resolution of ros map (m/cell)
+/// \param xy_switched - is x and y switched from nonros to ros coords
+/// \param ros_map_width - width of map in ros coords system
+/// \param ros_map_height - height of map in ros coords system
+/// \param ros_map_origin_x - origin of map x ros coord
+/// \param ros_map_origin_y - origin of map y ros coord
+/// \return sequence of coords in ros coords system
+std::vector<std::array<double, 2>> translate_sequence_to_ros_coords(const std::vector<std::array<int, 2>>& nonros_coords,
+                                                                    const double nonros_map_width,
+                                                                    const double nonros_map_height,
+                                                                    const bool xy_switched,
+                                                                    const double ros_map_width,
+                                                                    const double ros_map_height,
+                                                                    const double ros_map_origin_x,
+                                                                    const double ros_map_origin_y)
+{
+    std::vector<std::array<double, 2>> ros_coords;
+    int x_index = xy_switched ? 1 : 0;
+    int y_index = xy_switched ? 0 : 1;
+    for(const auto& nonros_coord: nonros_coords)
+    {
+        const double x = ros_map_origin_x + (nonros_coord[x_index] * ros_map_width ) / (nonros_map_width);
+        const double y =
+                ros_map_origin_y + ros_map_height * (1 - (nonros_coord[y_index] / nonros_map_height));
+        ros_coords.emplace_back(std::array<double, 2>{x, y});
+        ROS_DEBUG("ROS COORDS: (%f, %f)", x, y);
+    }
+    return ros_coords;
 }
 
 } // namespace fmt_star

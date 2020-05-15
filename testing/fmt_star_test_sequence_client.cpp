@@ -3,29 +3,7 @@
 #include <actionlib/client/terminal_state.h>
 #include <fmt_star/planAction.h>
 #include <nav_msgs/OccupancyGrid.h>
-
-std::vector<std::array<double, 2>> translate_sequence_to_ros_coords(const std::vector<std::array<int, 2>>& nonros_coords,
-                                                                    const double nonros_map_width,
-                                                                    const double nonros_map_height,
-                                                                    const double resolution,
-                                                                    const bool xy_switched,
-                                                                    const double ros_map_width,
-                                                                    const double ros_map_height,
-                                                                    const double ros_map_origin_x,
-                                                                    const double ros_map_origin_y)
-{
-    std::vector<std::array<double, 2>> ros_coords;
-    int x_index = xy_switched ? 1 : 0;
-    int y_index = xy_switched ? 0 : 1;
-    for(const auto& nonros_coord: nonros_coords)
-    {
-        const double x = ros_map_origin_x + (nonros_coord[x_index] * ros_map_width * resolution) / (nonros_map_width);
-        const double y =
-                ros_map_origin_y + ros_map_height * resolution * (1 - (nonros_coord[y_index] / nonros_map_height));
-        ros_coords.emplace_back(std::array<double, 2>{x, y});
-    }
-    return ros_coords;
-}
+#include <fmt_star/planner.h>
 
 int main (int argc, char **argv)
 {
@@ -51,10 +29,9 @@ int main (int argc, char **argv)
     ROS_INFO("Origin: (%f, %f)", origin.position.x, origin.position.y);
     ROS_INFO("Map Size: (%f, %f)", input_map->info.width*resolution, input_map->info.height*resolution);
 
-    const auto ros_sequence = translate_sequence_to_ros_coords(sequence,
+    const auto ros_sequence = fmt_star::translate_sequence_to_ros_coords(sequence,
                                                              original_map_width,
                                                              original_map_height,
-                                                             resolution,
                                                              true,
                                                              input_map->info.width*resolution,
                                                              input_map->info.height*resolution,
@@ -89,7 +66,7 @@ int main (int argc, char **argv)
         goal.update_samples = true;
         ac.sendGoal(goal);
 
-        sleep(10);
+        sleep(1);
 
         //wait for the action to return
         bool finished_before_timeout = ac.waitForResult(ros::Duration(30.0));

@@ -153,6 +153,28 @@ private:
     void visualize_samples();
 };
 
+/// Helper function to convert sequence of user coordinates from non ros map to ros coordinates
+/// \note This function is only useful for scaling and flipping of coordinates based on the parameters passed to the
+/// function
+/// \param nonros_coords - sequence of coords in nonros coord system
+/// \param nonros_map_width - width of map in nonros coord system
+/// \param nonros_map_height - height of map in nonros coord system
+/// \param resolution - resolution of ros map (m/cell)
+/// \param xy_switched - is x and y switched from nonros to ros coords
+/// \param ros_map_width - width of map in ros coords system
+/// \param ros_map_height - height of map in ros coords system
+/// \param ros_map_origin_x - origin of map x ros coord
+/// \param ros_map_origin_y - origin of map y ros coord
+/// \return sequence of coords in ros coords system
+std::vector<std::array<double, 2>> translate_sequence_to_ros_coords(const std::vector<std::array<int, 2>>& nonros_coords,
+                                                                    const double nonros_map_width,
+                                                                    const double nonros_map_height,
+                                                                    const bool xy_switched,
+                                                                    const double ros_map_width,
+                                                                    const double ros_map_height,
+                                                                    const double ros_map_origin_x,
+                                                                    const double ros_map_origin_y);
+
 } // namespace fmt_star
 
 #endif //SRC_PLANNER_H
